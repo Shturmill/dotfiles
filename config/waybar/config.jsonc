@@ -1,0 +1,139 @@
+{
+  "layer": "top",
+  "height": 47,
+  "reload_style_on_change": true,
+  "modules-left": [
+    "hyprland/workspaces",
+    "mpris"
+  ],
+  "modules-center": [
+    "clock"
+  ],
+  "modules-right": [
+    "tray",
+    "backlight", 
+    "pulseaudio",
+    "cpu",
+    "memory",
+    "battery",
+    "power-profiles-daemon"
+  ],
+
+  // Конфигурация рабочих столов Hyprland
+  "hyprland/workspaces": {
+    "format": "{icon}",
+    "on-click": "activate",
+    "sort-by-number": true,
+    "on-scroll-up": "hyprctl dispatch workspace e-1",
+    "on-scroll-down": "hyprctl dispatch workspace e+1",
+    "format-icons": {
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5"
+    }
+  },
+
+  // Музыкальный плеер
+  "mpris": {
+    "format": "{player_icon} {title} - {artist}",
+    "format-paused": " {title} - {artist}",
+    "max-length": 50,
+    "player-icons": {
+      "default": "🎵",
+      "spotify": ""
+    },
+    "status-icons": {
+      "paused": ""
+    }
+  },
+
+  // Часы и календарь
+  "clock": {
+    "interval": 1,
+    "format": " {:%d.%m.%Y | %H:%M}",
+    "tooltip": true,
+    "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
+    "calendar": {
+      "mode": "month",
+      "mode-mon-col": 3,
+      "weeks-pos": "right",
+      "on-scroll": 1, // Включает прокрутку месяцев
+      "on-click-right": "mode",
+      "format": {
+        "months": "<span color='#ffead3'><b>{}</b></span>",
+        "days": "<span color='#ecc6d9'><b>{}</b></span>",
+        "weeks": "<span color='#99ffdd'><b>W{}</b></span>",
+        "weekdays": "<span color='#ffcc66'><b>{}</b></span>",
+        "today": "<span color='#ff6699'><b><u>{}</u></b></span>"
+      }
+    }
+  },
+
+  // Системный трей
+  "tray": {
+    "icon-size": 15,
+    "spacing": 10
+  },
+
+  "backlight": {
+    "device": "intel_backlight", 
+    "format": "{percent}% {icon}",
+    "format-icons": ["🌑", "🌘", "🌗", "🌖", "🌕"],
+    "on-scroll-up": "brightnessctl set 1%+", 
+    "on-scroll-down": "brightnessctl set 1%-" 
+  },
+
+  // Модуль управления громкостью
+  "pulseaudio": {
+    "format": "{volume}% {icon}",
+    "format-muted": " Muted",
+    "format-icons": {
+        "default": ["", "", ""]
+    },
+    "tooltip": false,
+    "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle", // Включение/выключение звука по клику
+    "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+", // Увеличить громкость на 5%
+    "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-" // Уменьшить громкость на 5%
+},
+  
+      
+  "battery": {
+    "states": {
+      "warning": 30,
+      "critical": 15
+    },
+    "format": "{capacity}% {icon}",
+    "format-charging": "{capacity}% ",
+    "format-plugged": "{capacity}% ",
+    "format-alt": "{time} {icon}",
+    "format-icons": ["", "", "", "", ""] // Иконки для отображения заряда
+  },
+
+  // Процессор
+  "cpu": {
+    "interval": 10,
+    "format": " {usage}%",
+    "max-length": 10
+  },
+
+  // Память
+  "memory": {
+    "interval": 30,
+    "format": " {used:0.1f} GB"
+  },
+  
+  // Профили питания
+  "power-profiles-daemon": {
+    "format": "{icon}",
+    "tooltip-format": "Power profile: {profile}",
+    "tooltip": true,
+    "format-icons": {
+      "default": "",
+      "performance": "",
+      "balanced": "",
+      "power-saver": ""
+    }
+  }
+}

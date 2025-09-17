@@ -1,0 +1,75 @@
+* {
+    font-family: "JetBrainsMono Nerd Font Propo";
+    font-weight: bold;
+    font-size: 14px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: transparent;
+}
+
+tooltip {
+    background: #15161e;
+    border: 2px solid #c0caf5;
+    border-radius: 5px;
+}
+
+#workspaces button,
+#mpris,
+#clock,
+#tray,
+#cpu,
+#memory,
+#battery,
+#power-profiles-daemon,
+#pulseaudio,
+#backlight { /* Добавлен селектор #backlight */
+    background: #292c3c;
+    margin: 10px 4px 4px 4px;
+    padding: 4px 10px;
+    box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.185);
+    border-radius: 8px;
+    color: #c0caf5;
+}
+
+#workspaces {
+    padding: 0 3px;
+}
+
+#workspaces button {
+    padding: 0px 12px 0px 8px;
+    margin-left: 3px;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    font-size: 10px;
+    color: #c0caf5;
+}
+
+#workspaces button:hover {
+    background: #e1a5a6;
+}
+
+#workspaces button.active {
+    background: #3E5F8A;
+}
+
+#battery.warning:not(.charging) {
+    color: #fab387;
+}
+
+#battery.critical:not(.charging) {
+    color: #f38ba8;
+    animation-name: blink;
+    animation-duration: 1s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes blink {
+    to {
+        background-color: #e64553;
+        color: #1e1e2e;
+    }
+}

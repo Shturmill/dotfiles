@@ -1,22 +1,22 @@
-//Тонкие вкладки и поисковая строка
+//thikness of bars
 user_pref("browser.uidensity", 1);
 
-// Отключаем Pocket
+//disaibling the pocket
 user_pref("extensions.pocket.api", "");
 user_pref("extensions.pocket.enabled", false);
 user_pref("extensions.pocket.site", "");
 user_pref("extensions.pocket.oAuthConsumerKey", "");
 
-//Отключаем анимацию открытия видео на фуллскин и подсказку "нажмите esc.."
+//disaibling the hint of fullscreen and animtaion  
 user_pref("full-screen-api.transition-duration.enter", "0");
 user_pref("full-screen-api.transition-duration.leave", "0");
 user_pref("full-screen-api.warning.timeout", 0);
 
-//Просим сайты не отслеживать Вас
+//turning on tracker protection
 user_pref("privacy.trackingprotection.enabled", true);
 user_pref("privacy.donottrackheader.enabled", true);
 
-//Отключаем телеметрию и отправку отчетов
+//turning off the telemetry
 user_pref("toolkit.telemetry.archive.enabled", false);
 user_pref("toolkit.telemetry.bhrPing.enabled", false);
 user_pref("toolkit.telemetry.cachedClientID", "");
