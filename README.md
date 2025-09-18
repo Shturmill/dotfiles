@@ -15,9 +15,10 @@
 
 ![imag](data/image.png)
 
-for fast installin you can run
+for fast installing you can run
 
 ```
+git clone https://github.com/Shturmill/dotfiles
 cd dotfiles
 chmod +x install.sh
 ./install.sh

@@ -11,14 +11,14 @@
   ],
   "modules-right": [
     "tray",
-    "backlight", 
+    "backlight",
     "pulseaudio",
+    "network",
     "cpu",
     "memory",
     "battery",
     "power-profiles-daemon"
   ],
-
   // Конфигурация рабочих столов Hyprland
   "hyprland/workspaces": {
     "format": "{icon}",
@@ -34,7 +34,6 @@
       "5": "5"
     }
   },
-
   // Музыкальный плеер
   "mpris": {
     "format": "{player_icon} {title} - {artist}",
@@ -48,7 +47,6 @@
       "paused": ""
     }
   },
-
   // Часы и календарь
   "clock": {
     "interval": 1,
@@ -59,7 +57,7 @@
       "mode": "month",
       "mode-mon-col": 3,
       "weeks-pos": "right",
-      "on-scroll": 1, // Включает прокрутку месяцев
+      "on-scroll": 1,
       "on-click-right": "mode",
       "format": {
         "months": "<span color='#ffead3'><b>{}</b></span>",
@@ -70,35 +68,49 @@
       }
     }
   },
-
   // Системный трей
   "tray": {
     "icon-size": 15,
     "spacing": 10
   },
-
   "backlight": {
-    "device": "intel_backlight", 
+    "device": "intel_backlight",
     "format": "{percent}% {icon}",
-    "format-icons": ["🌑", "🌘", "🌗", "🌖", "🌕"],
-    "on-scroll-up": "brightnessctl set 1%+", 
-    "on-scroll-down": "brightnessctl set 1%-" 
+    "format-icons": [
+      "🌑",
+      "🌘",
+      "🌗",
+      "🌖",
+      "🌕"
+    ],
+    "on-scroll-up": "brightnessctl set 1%+",
+    "on-scroll-down": "brightnessctl set 1%-"
   },
-
   // Модуль управления громкостью
   "pulseaudio": {
     "format": "{volume}% {icon}",
     "format-muted": " Muted",
     "format-icons": {
-        "default": ["", "", ""]
+      "default": [
+        "",
+        "",
+        ""
+      ]
     },
     "tooltip": false,
     "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle", // Включение/выключение звука по клику
     "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+", // Увеличить громкость на 5%
     "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-" // Уменьшить громкость на 5%
-},
-  
-      
+  },
+  "network": {
+    // "interface": "wlp2*", // (Optional) To force the use of this interface
+    "format-wifi": "{essid} ",
+    "format-ethernet": "{ipaddr}/{cidr} ",
+    "tooltip-format": "{ifname} via {gwaddr} ",
+    "format-linked": "{ifname} (No IP) ",
+    "format-disconnected": "Disconnected ⚠",
+    "format-alt": "{ifname}: {ipaddr}/{cidr}"
+  },
   "battery": {
     "states": {
       "warning": 30,
@@ -108,22 +120,25 @@
     "format-charging": "{capacity}% ",
     "format-plugged": "{capacity}% ",
     "format-alt": "{time} {icon}",
-    "format-icons": ["", "", "", "", ""] // Иконки для отображения заряда
+    "format-icons": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
   },
-
   // Процессор
   "cpu": {
     "interval": 10,
     "format": " {usage}%",
     "max-length": 10
   },
-
   // Память
   "memory": {
     "interval": 30,
     "format": " {used:0.1f} GB"
   },
-  
   // Профили питания
   "power-profiles-daemon": {
     "format": "{icon}",
