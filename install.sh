@@ -35,7 +35,7 @@ install_dependencies() {
     read -p "Хотите установить рекомендованные пакеты (git, firefox, fish и т.д.)? [Y/n] " -n 1 -r
     echo # Переход на новую строку
     if [[ $REPLY =~ ^[Yy]$ || -z $REPLY ]]; then
-        sudo pacman -Syu --noconfirm git firefox telegram-desktop fish waybar docker docker-compose fastfetch brightnessctl
+        sudo pacman -Syu --noconfirm git firefox chromium telegram-desktop fish waybar docker docker-compose fastfetch brightnessctl power-profile-daemon 
     else
         info "Установка пакетов пропущена."
     fi
