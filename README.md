@@ -9,9 +9,9 @@
   </a>
 </p>
 
-**This repositry is holding authors configuration of main apps and installing script**
+**This repository contains the author's personal configuration files for Hyprland and related applications, along with an automated installation script.**
 
-## Author`s system:
+## Author`s system
 
 ![imag](data/image.png)
 
@@ -23,3 +23,19 @@ cd dotfiles
 chmod +x install.sh
 ./install.sh
 ```
+
+## Key Bindings
+
+There you can shortcuts for apps i use
+
+| Shortcut | Action |
+|------------|----------|
+| `Super + Q` | Open terminal (Kitty) |
+| `Super + C` | Close selected window |
+| `Super + E` | Open file manager (Thunar) |
+| `Super + R` | Open Wofi |
+| `Super + B` | Open Firefox |
+| `Super + T` | Open Telegram |
+| `Super + Shift+ S` | Take screenshot to clipboard |
+
+**Note:** all orientation function the same as default hyprland config
