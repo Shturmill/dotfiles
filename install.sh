@@ -81,8 +81,8 @@ validate_environment() {
     fi
     
     # Check if config directory exists
-    if [[ ! -d "$SOURCE_DIR/config" ]] && ! compgen -G "$SOURCE_DIR/config*" > /dev/null; then
-        log_warn "No config directories found. Config copying will be skipped."
+    if [[ ! -d "$SOURCE_DIR/config" ]]; then
+        log_warn "Config directory not found. Config copying will be skipped."
         SKIP_CONFIGS=true
     fi
     
@@ -376,43 +376,51 @@ copy_configs() {
         log_info "Skipping config file copying"
         return 0
     fi
-    
+
     log_info "Copying configuration files..."
-    
+
     mkdir -p "$TARGET_DIR"
-    
-    # Find all config directories/files
+
+    local config_dir="$SOURCE_DIR/config"
+
+    if [[ ! -d "$config_dir" ]]; then
+        log_warn "Config directory not found: $config_dir"
+        return 0
+    fi
+
+    # Get list of items inside config/
     local config_items=()
     while IFS= read -r -d '' item; do
         config_items+=("$item")
-    done < <(find "$SOURCE_DIR" -maxdepth 1 -name 'config*' -print0)
-    
+    done < <(find "$config_dir" -mindepth 1 -maxdepth 1 -print0)
+
     if [[ ${#config_items[@]} -eq 0 ]]; then
-        log_warn "No config files/directories found"
+        log_warn "No config files/directories found in $config_dir"
         return 0
     fi
-    
+
     log_info "Found ${#config_items[@]} config item(s) to copy"
-    
+
     for item in "${config_items[@]}"; do
         local basename_item=$(basename "$item")
         local target_path="$TARGET_DIR/$basename_item"
-        
+
         if [[ -e "$target_path" ]]; then
             create_backup "$target_path"
+            rm -rf "$target_path"
         fi
-        
+
         if [[ "$DRY_RUN" == true ]]; then
             log_debug "DRY-RUN: Would copy $item -> $target_path"
         else
-            if cp -rv "$item" "$TARGET_DIR/"; then
+            if cp -rv "$item" "$target_path"; then
                 log_info "Copied: $basename_item"
             else
                 log_error "Failed to copy: $basename_item"
             fi
         fi
     done
-    
+
     log_info "Configuration files copied to $TARGET_DIR"
 }
 
@@ -557,7 +565,7 @@ main() {
     setup_firefox
     change_shell
     copy_configs
-    
+
     log_info "Installation completed successfully!"
     log_info "Log file: $LOG_FILE"
     
