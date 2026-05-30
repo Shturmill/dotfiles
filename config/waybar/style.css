@@ -11,54 +11,37 @@
     background: #292c3c;
     color: #c0caf5;
     margin: 6px 4px;
-    
-    /* БЫЛО: padding: 0 10px; */
-    /* СТАЛО: 2px сверху/снизу и 16px по краям, чтобы текст не зажимало */
-    padding: 2px 8px; 
-    
+    padding: 2px 8px;
     border-radius: 8px;
     box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.15);
 }
-
-/* Чуть-чуть увеличим отступ для трея, чтобы иконки Telegram и т.д. не слипались */
 #tray {
     padding: 0 12px;
 }
-
-/* Делаем иконки интерактивными: при наведении цвет меняется */
 #mpris:hover,
 #pulseaudio:hover,
 #network:hover {
-    background: #3E5F8A;
+    background: #3e5f8a;
 }
-
-/* Красивая подсветка для батареи */
 #battery.charging {
-    color: #a6e3a1; /* Зеленый при зарядке */
+    color: #a6e3a1;
 }
-
 #battery.warning:not(.charging) {
-    color: #fab387; /* Оранжевый, когда мало заряда */
+    color: #fab387;
 }
-
 #battery.critical:not(.charging) {
-    background: #f38ba8; /* Красный фон при критическом разряде */
+    background: #f38ba8;
     color: #1e1e2e;
 }
 
-
-/* Общий контейнер (подложка), чтобы стол выглядел как модули справа */
+/* Подложка под workspaces, как у модулей справа */
 #workspaces {
     background: #292c3c;
-    margin: 6px 4px; /* Отступы снаружи плашки */
+    margin: 6px 4px;
     border-radius: 8px;
     box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.15);
-    
-    /* Твой код интеграции: */
-    padding: 0 4px; /* Внутренний отступ самой плашки */
+    padding: 0 4px;
 }
-
-/* 3. Настройка рабочих столов (Workspaces) */
 #workspaces button {
     padding: 0 8px;
     margin: 4px 2px;
@@ -66,33 +49,25 @@
     border-radius: 6px;
     background: transparent;
     box-shadow: none;
-    /* Улучшенная анимация: добавляем min-width и меняем кривую на ease-in-out для плавности */
-    transition: all 0.3s ease-in-out; 
-    min-width: 15px; /* Базовая ширина неактивной кнопки */
+    transition: all 0.3s ease-in-out;
+    min-width: 15px;
     font-size: 14px;
     color: #c0caf5;
 }
-
-/* Цвета при наведении */
 #workspaces button:hover {
     background: #e1a5a6;
     color: #1e1e2e;
-    min-width: 25px; /* Слегка расширяется при наведении */
+    min-width: 25px;
 }
-
-/* АКТИВНЫЙ СТОЛ: здесь происходит главная анимация */
 #workspaces button.active {
-    background: #3E5F8A;
+    background: #3e5f8a;
     color: #ffffff;
-    min-width: 35px; /* Кнопка плавно растягивается, показывая, что она главная */
-    border-radius: 8px; /* Чуть сильнее скругляем растянутую форму */
+    min-width: 35px;
+    border-radius: 8px;
 }
-
-/* Опционально: подсветка неактивного стола с открытыми окнами */
 #workspaces button.occupied {
-    color: #7aa2f7; 
+    color: #7aa2f7;
 }
-
 window#waybar {
     background: transparent;
     background-color: transparent;
