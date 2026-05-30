@@ -12,23 +12,23 @@ setup_logging() {
 }
 
 log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1" | tee -a "$LOG_FILE"
+    echo -e "${GREEN}[INFO]${NC} $1"
 }
 
 log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1" | tee -a "$LOG_FILE"
+    echo -e "${YELLOW}[WARN]${NC} $1"
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE" >&2
+    echo -e "${RED}[ERROR]${NC} $1" >&2
 }
 
 log_debug() {
     if [[ "$VERBOSE" == true ]]; then
-        echo -e "${BLUE}[DEBUG]${NC} $1" | tee -a "$LOG_FILE"
+        echo -e "${BLUE}[DEBUG]${NC} $1"
     fi
 }
 
 log_step() {
-    echo -e "${CYAN}[STEP]${NC} $1" | tee -a "$LOG_FILE"
+    echo -e "${CYAN}[STEP]${NC} $1"
 }

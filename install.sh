@@ -216,13 +216,22 @@ parse_arguments() {
 }
 
 main() {
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help)
+                print_usage
+                exit 0
+                ;;
+        esac
+    done
+
     echo -e "${GREEN}╔═══════════════════════════════════════╗${NC}"
     echo -e "${GREEN}║  Dotfiles Installer v$SCRIPT_VERSION         ║${NC}"
     echo -e "${GREEN}╚═══════════════════════════════════════╝${NC}"
     echo
 
-    parse_arguments "$@"
     setup_logging
+    parse_arguments "$@"
     validate_environment
 
     log_info "Starting installation process..."

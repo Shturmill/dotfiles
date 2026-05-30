@@ -53,6 +53,10 @@ setup_firefox() {
         echo -n "Select profile [0]: "
         read -r selection
         selection=${selection:-0}
+        if [[ ! "$selection" =~ ^[0-9]+$ ]] || (( selection < 0 || selection >= ${#prefs_files[@]} )); then
+            log_error "Invalid Firefox profile selection: $selection"
+            return 1
+        fi
         prefs_file="${prefs_files[$selection]}"
     fi
 
@@ -66,42 +70,47 @@ setup_firefox() {
     # Create backup
     create_backup "$prefs_file"
 
-    # Smart merge: remove duplicate preferences
-    local temp_prefs="/tmp/firefox_prefs_merged_$$"
-    local new_prefs="$SOURCE_DIR/firefox.txt"
+    (
+        # Smart merge: remove duplicate preferences
+        local temp_dir
+        temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/firefox-prefs.XXXXXXXXXX")
+        local temp_prefs="$temp_dir/prefs.js"
+        local new_prefs="$SOURCE_DIR/firefox.txt"
+        trap 'rm -rf "$temp_dir"' EXIT
 
-    log_info "Merging preferences (avoiding duplicates)..."
+        log_info "Merging preferences (avoiding duplicates)..."
 
-    # Extract preference keys from new prefs
-    local new_keys=()
-    while IFS= read -r line; do
-        if [[ "$line" =~ user_pref\(\"([^\"]+)\" ]]; then
-            new_keys+=("${BASH_REMATCH[1]}")
-        fi
-    done < "$new_prefs"
-
-    # Copy existing prefs, excluding ones we're about to add
-    while IFS= read -r line; do
-        local skip=false
-        for key in "${new_keys[@]}"; do
-            if [[ "$line" =~ user_pref\(\"$key\" ]]; then
-                skip=true
-                log_debug "Removing duplicate preference: $key"
-                break
+        # Extract preference keys from new prefs
+        local -A new_keys=()
+        while IFS= read -r line; do
+            if [[ "$line" =~ user_pref\(\"([^\"]+)\" ]]; then
+                new_keys["${BASH_REMATCH[1]}"]=1
             fi
-        done
-        if [[ "$skip" == false ]]; then
-            echo "$line" >> "$temp_prefs"
-        fi
-    done < "$prefs_file"
+        done < "$new_prefs"
 
-    # Append new preferences
-    echo "" >> "$temp_prefs"
-    echo "// Added by dotfiles installer on $(date)" >> "$temp_prefs"
-    cat "$new_prefs" >> "$temp_prefs"
+        # Copy existing prefs, excluding ones we're about to add
+        while IFS= read -r line; do
+            local skip=false
+            if [[ "$line" =~ user_pref\(\"([^\"]+)\" ]]; then
+                local existing_key="${BASH_REMATCH[1]}"
+                if [[ -n "${new_keys[$existing_key]+x}" ]]; then
+                    skip=true
+                    log_debug "Removing duplicate preference: $existing_key"
+                fi
+            fi
+            if [[ "$skip" == false ]]; then
+                echo "$line" >> "$temp_prefs"
+            fi
+        done < "$prefs_file"
 
-    # Replace original file
-    mv "$temp_prefs" "$prefs_file"
+        # Append new preferences
+        echo "" >> "$temp_prefs"
+        echo "// Added by dotfiles installer on $(date)" >> "$temp_prefs"
+        cat "$new_prefs" >> "$temp_prefs"
+
+        # Replace original file
+        mv "$temp_prefs" "$prefs_file"
+    )
 
     log_info "Firefox preferences applied successfully"
 }

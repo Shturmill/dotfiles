@@ -21,18 +21,23 @@ install_yay() {
     fi
 
     log_info "Installing build dependencies for yay..."
-    sudo pacman -S --noconfirm --needed git base-devel
-
-    local yay_dir="/tmp/yay-install-$$"
-
-    log_info "Cloning yay repository..."
-    if ! git clone https://aur.archlinux.org/yay.git "$yay_dir"; then
-        log_error "Failed to clone yay repository"
+    if ! sudo pacman -S --noconfirm --needed git base-devel; then
+        log_error "Failed to install build dependencies for yay"
         return 1
     fi
 
-    log_info "Building and installing yay..."
     (
+        local yay_dir
+        yay_dir=$(mktemp -d "${TMPDIR:-/tmp}/yay-install.XXXXXXXXXX")
+        trap 'rm -rf "$yay_dir"' EXIT
+
+        log_info "Cloning yay repository..."
+        if ! git clone https://aur.archlinux.org/yay.git "$yay_dir"; then
+            log_error "Failed to clone yay repository"
+            return 1
+        fi
+
+        log_info "Building and installing yay..."
         cd "$yay_dir"
         if makepkg -si --noconfirm; then
             log_info "yay installed successfully"
@@ -41,6 +46,4 @@ install_yay() {
             return 1
         fi
     )
-
-    rm -rf "$yay_dir"
 }

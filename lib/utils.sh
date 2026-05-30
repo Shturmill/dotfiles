@@ -28,12 +28,12 @@ confirm() {
 create_backup() {
     local file="$1"
     if [[ -e "$file" ]]; then
-        mkdir -p "$BACKUP_DIR"
         local backup_path="$BACKUP_DIR/$(basename "$file").$(date +%s)"
 
         if [[ "$DRY_RUN" == true ]]; then
             log_debug "DRY-RUN: Would backup $file to $backup_path"
         else
+            mkdir -p "$BACKUP_DIR"
             cp -a "$file" "$backup_path"
             log_info "Backed up: $file -> $backup_path"
         fi

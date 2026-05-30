@@ -1,76 +1,101 @@
-* {
-    font-family: "JetBrainsMono Nerd Font Propo";
-    font-weight: bold;
+#mpris,
+#tray,
+#cpu,
+#memory,
+#backlight,
+#pulseaudio,
+#network,
+#language,
+#battery,
+#power-profiles-daemon {
+    background: #292c3c;
+    color: #c0caf5;
+    margin: 6px 4px;
+    
+    /* БЫЛО: padding: 0 10px; */
+    /* СТАЛО: 2px сверху/снизу и 16px по краям, чтобы текст не зажимало */
+    padding: 2px 8px; 
+    
+    border-radius: 8px;
+    box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.15);
+}
+
+/* Чуть-чуть увеличим отступ для трея, чтобы иконки Telegram и т.д. не слипались */
+#tray {
+    padding: 0 12px;
+}
+
+/* Делаем иконки интерактивными: при наведении цвет меняется */
+#mpris:hover,
+#pulseaudio:hover,
+#network:hover {
+    background: #3E5F8A;
+}
+
+/* Красивая подсветка для батареи */
+#battery.charging {
+    color: #a6e3a1; /* Зеленый при зарядке */
+}
+
+#battery.warning:not(.charging) {
+    color: #fab387; /* Оранжевый, когда мало заряда */
+}
+
+#battery.critical:not(.charging) {
+    background: #f38ba8; /* Красный фон при критическом разряде */
+    color: #1e1e2e;
+}
+
+
+/* Общий контейнер (подложка), чтобы стол выглядел как модули справа */
+#workspaces {
+    background: #292c3c;
+    margin: 6px 4px; /* Отступы снаружи плашки */
+    border-radius: 8px;
+    box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.15);
+    
+    /* Твой код интеграции: */
+    padding: 0 4px; /* Внутренний отступ самой плашки */
+}
+
+/* 3. Настройка рабочих столов (Workspaces) */
+#workspaces button {
+    padding: 0 8px;
+    margin: 4px 2px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    box-shadow: none;
+    /* Улучшенная анимация: добавляем min-width и меняем кривую на ease-in-out для плавности */
+    transition: all 0.3s ease-in-out; 
+    min-width: 15px; /* Базовая ширина неактивной кнопки */
     font-size: 14px;
-    min-height: 0;
+    color: #c0caf5;
+}
+
+/* Цвета при наведении */
+#workspaces button:hover {
+    background: #e1a5a6;
+    color: #1e1e2e;
+    min-width: 25px; /* Слегка расширяется при наведении */
+}
+
+/* АКТИВНЫЙ СТОЛ: здесь происходит главная анимация */
+#workspaces button.active {
+    background: #3E5F8A;
+    color: #ffffff;
+    min-width: 35px; /* Кнопка плавно растягивается, показывая, что она главная */
+    border-radius: 8px; /* Чуть сильнее скругляем растянутую форму */
+}
+
+/* Опционально: подсветка неактивного стола с открытыми окнами */
+#workspaces button.occupied {
+    color: #7aa2f7; 
 }
 
 window#waybar {
     background: transparent;
-}
-
-tooltip {
-    background: #15161e;
-    border: 2px solid #c0caf5;
-    border-radius: 5px;
-}
-
-#workspaces button,
-#mpris,
-#clock,
-#tray,
-#network,
-#cpu,
-#memory,
-#battery,
-#power-profiles-daemon,
-#pulseaudio,
-#backlight { /* Добавлен селектор #backlight */
-    background: #292c3c;
-    margin: 10px 4px 4px 4px;
-    padding: 4px 10px;
-    box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.185);
-    border-radius: 8px;
-    color: #c0caf5;
-}
-
-#workspaces {
-    padding: 0 3px;
-}
-
-#workspaces button {
-    padding: 0px 12px 0px 8px;
-    margin-left: 3px;
-    border: 1px solid transparent;
-    transition: all 0.3s ease;
-    font-size: 10px;
-    color: #c0caf5;
-}
-
-#workspaces button:hover {
-    background: #e1a5a6;
-}
-
-#workspaces button.active {
-    background: #3E5F8A;
-}
-
-#battery.warning:not(.charging) {
-    color: #fab387;
-}
-
-#battery.critical:not(.charging) {
-    color: #f38ba8;
-    animation-name: blink;
-    animation-duration: 1s;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
-}
-
-@keyframes blink {
-    to {
-        background-color: #e64553;
-        color: #1e1e2e;
-    }
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
 }

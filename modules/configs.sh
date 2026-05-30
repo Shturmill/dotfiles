@@ -10,7 +10,11 @@ copy_configs() {
 
     log_info "Copying configuration files..."
 
-    mkdir -p "$TARGET_DIR"
+    if [[ "$DRY_RUN" == true ]]; then
+        log_debug "DRY-RUN: Would create config target directory: $TARGET_DIR"
+    else
+        mkdir -p "$TARGET_DIR"
+    fi
 
     local config_dir="$SOURCE_DIR/config"
 
@@ -36,14 +40,18 @@ copy_configs() {
         local basename_item=$(basename "$item")
         local target_path="$TARGET_DIR/$basename_item"
 
-        if [[ -e "$target_path" ]]; then
-            create_backup "$target_path"
-            rm -rf "$target_path"
-        fi
-
         if [[ "$DRY_RUN" == true ]]; then
+            create_backup "$target_path"
+            if [[ -e "$target_path" ]]; then
+                log_debug "DRY-RUN: Would remove existing target $target_path"
+            fi
             log_debug "DRY-RUN: Would copy $item -> $target_path"
         else
+            if [[ -e "$target_path" ]]; then
+                create_backup "$target_path"
+                rm -rf "$target_path"
+            fi
+
             if cp -rv "$item" "$target_path"; then
                 log_info "Copied: $basename_item"
             else
@@ -52,5 +60,9 @@ copy_configs() {
         fi
     done
 
-    log_info "Configuration files copied to $TARGET_DIR"
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "DRY-RUN: Configuration files would be copied to $TARGET_DIR"
+    else
+        log_info "Configuration files copied to $TARGET_DIR"
+    fi
 }

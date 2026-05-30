@@ -1,29 +1,35 @@
 {
   "layer": "top",
-  "height": 47,
+  "position": "top",
+  "height": 42, // Более компактная высота
+  "spacing": 4,
   "reload_style_on_change": true,
+
   "modules-left": [
     "hyprland/workspaces",
-    "mpris"
+    "hyprland/window" // Добавил заголовок окна для информативности
   ],
   "modules-center": [
     "clock"
   ],
   "modules-right": [
+    "mpris",
+    "hyprland/language",
     "tray",
+    "cpu",
+    "memory",
     "backlight",
     "pulseaudio",
     "network",
-    "cpu",
-    "memory",
     "battery",
     "power-profiles-daemon"
   ],
-  // Конфигурация рабочих столов Hyprland
+
   "hyprland/workspaces": {
     "format": "{icon}",
     "on-click": "activate",
     "sort-by-number": true,
+    "all-outputs": false, // <--- ИЗМЕНИТЬ НА FALSE
     "on-scroll-up": "hyprctl dispatch workspace e-1",
     "on-scroll-down": "hyprctl dispatch workspace e+1",
     "format-icons": {
@@ -34,76 +40,69 @@
       "5": "5"
     }
   },
-  // Музыкальный плеер
-  "mpris": {
-    "format": "{player_icon} {title} - {artist}",
-    "format-paused": " {title} - {artist}",
-    "max-length": 50,
-    "player-icons": {
-      "default": "🎵",
-      "spotify": ""
-    },
-    "status-icons": {
-      "paused": ""
-    }
+
+  "hyprland/window": {
+    "format": " {title} ",
+    "max-length": 40,
+    "separate-outputs": true
   },
-  // Часы и календарь
+
+  "mpris": {
+    "format": "󰎈 {title}", // Строгая иконка вместо 🎵
+    "format-paused": "󰏤 {title}",
+    "max-length": 25,
+    "on-click": "playerctl play-pause"
+  },
+
+  "hyprland/language": {
+    "format-en": "ENG",
+    "format-ru": "RU"
+
+  },
+
   "clock": {
-    "interval": 1,
-    "format": " {:%d.%m.%Y | %H:%M}",
-    "tooltip": true,
-    "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
+    "interval": 60,
+    "format": "󰃭 {:%d.%m | %H:%M}", // Нейтральная иконка
+    "tooltip-format": "<tt><small>{calendar}</small></tt>",
     "calendar": {
       "mode": "month",
-      "mode-mon-col": 3,
-      "weeks-pos": "right",
       "on-scroll": 1,
-      "on-click-right": "mode",
       "format": {
-        "months": "<span color='#ffead3'><b>{}</b></span>",
-        "days": "<span color='#ecc6d9'><b>{}</b></span>",
-        "weeks": "<span color='#99ffdd'><b>W{}</b></span>",
-        "weekdays": "<span color='#ffcc66'><b>{}</b></span>",
         "today": "<span color='#ff6699'><b><u>{}</u></b></span>"
       }
     }
   },
-  // Системный трей
-  "tray": {
-    "icon-size": 15,
-    "spacing": 10
+
+  "cpu": {
+    "interval": 5,
+    "format": "󰻠 {usage}%"
   },
-  "backlight": {
-    "device": "intel_backlight",
-    "format": "{percent}% {icon}",
-    "format-icons": [
-      "🌑",
-      "🌘",
-      "🌗",
-      "🌖",
-      "🌕"
-    ],
+
+  "memory": {
+    "interval": 10,
+    "format": "󰍛 {used}G"
+  },
+
+"backlight": {
+    "format": "{icon} {percent}%",
+    "format-icons": ["󰃞", "󰃟", "󰃠"],
     "on-scroll-up": "brightnessctl set 1%+",
     "on-scroll-down": "brightnessctl set 1%-"
   },
-  // Модуль управления громкостью
-  "pulseaudio": {
-    "format": "{volume}% {icon}",
-    "format-muted": " Muted",
+
+"pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": "󰝟 Mute",
     "format-icons": {
-      "default": [
-        "",
-        "",
-        ""
-      ]
+      "default": ["󰕿", "󰖀", "󰕾"]
     },
-    "tooltip": false,
-    "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle", // Включение/выключение звука по клику
-    "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+", // Увеличить громкость на 5%
-    "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-" // Уменьшить громкость на 5%
+    "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle", // ЛКМ — Вкл/выкл звук (мут)
+    "on-click-right": "pavucontrol", // ПКМ — Открыть микшер громкости
+    "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+", 
+    "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-" 
   },
+
   "network": {
-    // "interface": "wlp2*", // (Optional) To force the use of this interface
     "format-wifi": "{essid} ",
     "format-ethernet": "{ipaddr}/{cidr} ",
     "tooltip-format": "{ifname} via {gwaddr} ",
@@ -111,44 +110,30 @@
     "format-disconnected": "Disconnected ⚠",
     "format-alt": "{ifname}: {ipaddr}/{cidr}"
   },
-  "battery": {
+
+"battery": {
     "states": {
       "warning": 30,
       "critical": 15
     },
-    "format": "{capacity}% {icon}",
-    "format-charging": "{capacity}% ",
-    "format-plugged": "{capacity}% ",
-    "format-alt": "{time} {icon}",
-    "format-icons": [
-      "",
-      "",
-      "",
-      "",
-      ""
-    ]
+    "format": "{icon} {capacity}%",
+    "format-charging": " {capacity}%", // Иконка вилки при зарядке
+    "format-alt": "{icon} {time}", // Показывает оставшееся время по клику
+    "format-icons": ["", "", "", "", ""] // Строгие, классические индикаторы
   },
-  // Процессор
-  "cpu": {
-    "interval": 10,
-    "format": " {usage}%",
-    "max-length": 10
+
+  "tray": {
+    "icon-size": 16,
+    "spacing": 8
   },
-  // Память
-  "memory": {
-    "interval": 30,
-    "format": " {used:0.1f} GB"
-  },
-  // Профили питания
+
   "power-profiles-daemon": {
     "format": "{icon}",
-    "tooltip-format": "Power profile: {profile}",
-    "tooltip": true,
     "format-icons": {
-      "default": "",
-      "performance": "",
-      "balanced": "",
-      "power-saver": ""
+      "default": "󰓅",
+      "performance": "󰓅",
+      "balanced": "󰾅",
+      "power-saver": "󰾆"
     }
   }
 }
