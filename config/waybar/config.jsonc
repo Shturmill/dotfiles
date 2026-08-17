@@ -101,7 +101,7 @@
     "format": "{icon} {capacity}%",
     "format-charging": " {capacity}%",
     "format-alt": "{icon} {time}",
-    "format-icons": ["", "", "", "", ""],
+    "format-icons": ["󰂎", "󰁺", "󰁼", "󰁾", "󰂀", "󰁹"]
   },
   "tray": {
     "icon-size": 16,
