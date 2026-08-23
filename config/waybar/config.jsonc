@@ -16,7 +16,7 @@
     "pulseaudio",
     "network",
     "battery",
-    "power-profiles-daemon",
+    "power-profiles-daemon"
   ],
   "hyprland/workspaces": {
     "format": "{icon}",
@@ -25,29 +25,20 @@
     "all-outputs": false,
     "on-scroll-up": "hyprctl dispatch workspace e-1",
     "on-scroll-down": "hyprctl dispatch workspace e+1",
-    "format-icons": {
-      "1": "1",
-      "2": "2",
-      "3": "3",
-      "4": "4",
-      "5": "5",
-    },
+    "format-icons": { "1": "1", "2": "2", "3": "3", "4": "4", "5": "5" }
   },
   "hyprland/window": {
     "format": " {title} ",
     "max-length": 40,
-    "separate-outputs": true,
+    "separate-outputs": true
   },
   "mpris": {
     "format": "󰎈 {title}",
     "format-paused": "󰏤 {title}",
     "max-length": 25,
-    "on-click": "playerctl play-pause",
+    "on-click": "playerctl play-pause"
   },
-  "hyprland/language": {
-    "format-en": "ENG",
-    "format-ru": "RU",
-  },
+  "hyprland/language": { "format-en": "ENG", "format-ru": "RU" },
   "clock": {
     "interval": 60,
     "format": "󰃭 {:%d.%m | %H:%M}",
@@ -55,35 +46,25 @@
     "calendar": {
       "mode": "month",
       "on-scroll": 1,
-      "format": {
-        "today": "<span color='#ff6699'><b><u>{}</u></b></span>",
-      },
-    },
+      "format": { "today": "<span color='#@base0A@'><b><u>{}</u></b></span>" }
+    }
   },
-  "cpu": {
-    "interval": 5,
-    "format": "󰻠 {usage}%",
-  },
-  "memory": {
-    "interval": 10,
-    "format": "󰍛 {used}G",
-  },
+  "cpu": { "interval": 5, "format": "󰻠 {usage}%" },
+  "memory": { "interval": 10, "format": "󰍛 {used}G" },
   "backlight": {
     "format": "{icon} {percent}%",
     "format-icons": ["󰃞", "󰃟", "󰃠"],
     "on-scroll-up": "brightnessctl set 1%+",
-    "on-scroll-down": "brightnessctl set 1%-",
+    "on-scroll-down": "brightnessctl set 1%-"
   },
   "pulseaudio": {
     "format": "{icon} {volume}%",
     "format-muted": "󰝟 Mute",
-    "format-icons": {
-      "default": ["󰕿", "󰖀", "󰕾"],
-    },
+    "format-icons": { "default": ["󰕿", "󰖀", "󰕾"] },
     "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
     "on-click-right": "pavucontrol",
     "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%+",
-    "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-",
+    "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-"
   },
   "network": {
     "format-wifi": "{essid} ",
@@ -91,29 +72,23 @@
     "tooltip-format": "{ifname} via {gwaddr} ",
     "format-linked": "{ifname} (No IP) ",
     "format-disconnected": "Disconnected ⚠",
-    "format-alt": "{ifname}: {ipaddr}/{cidr}",
+    "format-alt": "{ifname}: {ipaddr}/{cidr}"
   },
   "battery": {
-    "states": {
-      "warning": 30,
-      "critical": 15,
-    },
+    "states": { "warning": 30, "critical": 15 },
     "format": "{icon} {capacity}%",
     "format-charging": " {capacity}%",
     "format-alt": "{icon} {time}",
     "format-icons": ["󰂎", "󰁺", "󰁼", "󰁾", "󰂀", "󰁹"]
   },
-  "tray": {
-    "icon-size": 16,
-    "spacing": 8,
-  },
+  "tray": { "icon-size": 16, "spacing": 8 },
   "power-profiles-daemon": {
     "format": "{icon}",
     "format-icons": {
       "default": "󰓅",
       "performance": "󰓅",
       "balanced": "󰾅",
-      "power-saver": "󰾆",
-    },
-  },
+      "power-saver": "󰾆"
+    }
+  }
 }

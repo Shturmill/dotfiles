@@ -1,3 +1,18 @@
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "JetBrains Mono";
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: #@base05@;
+}
+
+#workspaces,
+#clock,
 #mpris,
 #tray,
 #cpu,
@@ -8,69 +23,57 @@
 #language,
 #battery,
 #power-profiles-daemon {
-    background: #292c3c;
-    color: #c0caf5;
+    background: #@base01@;
+    color: #@base05@;
     margin: 6px 4px;
     padding: 2px 8px;
+    border: 1px solid #@base02@;
     border-radius: 8px;
-    box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.15);
-}
-#tray {
-    padding: 0 12px;
-}
-#mpris:hover,
-#pulseaudio:hover,
-#network:hover {
-    background: #3e5f8a;
-}
-#battery.charging {
-    color: #a6e3a1;
-}
-#battery.warning:not(.charging) {
-    color: #fab387;
-}
-#battery.critical:not(.charging) {
-    background: #f38ba8;
-    color: #1e1e2e;
 }
 
-/* Подложка под workspaces, как у модулей справа */
 #workspaces {
-    background: #292c3c;
-    margin: 6px 4px;
-    border-radius: 8px;
-    box-shadow: 1px 1px 2px 1px rgba(0, 0, 0, 0.15);
     padding: 0 4px;
 }
+
 #workspaces button {
     padding: 0 8px;
     margin: 4px 2px;
-    border: none;
     border-radius: 6px;
+    color: #@base04@;
     background: transparent;
-    box-shadow: none;
-    transition: all 0.3s ease-in-out;
-    min-width: 15px;
-    font-size: 14px;
-    color: #c0caf5;
+    transition: all 0.2s ease-in-out;
 }
+
 #workspaces button:hover {
-    background: #e1a5a6;
-    color: #1e1e2e;
-    min-width: 25px;
+    background: #@base0A@;
+    color: #@base00@;
 }
+
 #workspaces button.active {
-    background: #3e5f8a;
-    color: #ffffff;
     min-width: 35px;
-    border-radius: 8px;
+    background: #@base0D@;
+    color: #@base00@;
 }
+
 #workspaces button.occupied {
-    color: #7aa2f7;
+    color: #@base0C@;
 }
-window#waybar {
-    background: transparent;
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
+
+#mpris:hover,
+#pulseaudio:hover,
+#network:hover {
+    background: #@base02@;
+}
+
+#battery.charging { color: #@base0B@; }
+#battery.warning:not(.charging) { color: #@base09@; }
+#battery.critical:not(.charging) {
+    background: #@base08@;
+    color: #@base00@;
+}
+
+tooltip {
+    background: #@base01@;
+    color: #@base05@;
+    border: 1px solid #@base03@;
 }

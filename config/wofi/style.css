@@ -1,10 +1,18 @@
 window {
-  background-color: #1a1b26;
+  background-color: transparent;
+}
+
+#outer-box {
+  margin: 0;
+  padding: 6px;
+  background-color: #@base00@;
+  border: 2px solid rgba(250, 250, 250, 0.31);
+  border-radius: 10px;
 }
 
 * {
-  font-family: "Jetbrains Mono";
-  color: #fff;
+  font-family: "JetBrains Mono";
+  color: #@base05@;
 }
 
 #scroll {
@@ -12,35 +20,35 @@ window {
 }
 
 #input {
-  background-color: #1a1b26;
-  color: #c0caf5;
+  margin: 0.5rem;
+  padding: 0.6rem;
+  background-color: #@base01@;
+  color: #@base05@;
+  border: 1px solid #@base02@;
+  border-radius: 8px;
   outline: none;
   box-shadow: none;
-  border: 0;
-  border-radius: 0;
   font-size: 1rem;
-  padding: 0.5rem;
 }
 
 #inner-box {
-  margin: 0.5rem;
+  margin: 0 0.5rem 0.5rem;
   font-size: 1rem;
 }
 
 #img {
-  margin: 10px 10px;
+  margin: 10px;
 }
 
 #entry {
-  border-radius: 0.5rem;
+  border-radius: 8px;
+  padding: 0.25rem;
 }
 
 #entry:selected {
-  background-color: #c0caf5;
-  outline: none;
+  background-color: #@base0D@;
 }
 
 #text:selected {
-  color: #1a1b26;
+  color: #@base00@;
 }
-
