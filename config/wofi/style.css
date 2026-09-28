@@ -6,7 +6,7 @@ window {
   margin: 0;
   padding: 6px;
   background-color: #@base00@;
-  border: 2px solid rgba(250, 250, 250, 0.31);
+  border: 1px solid #@zed_border@;
   border-radius: 10px;
 }
 
@@ -22,13 +22,17 @@ window {
 #input {
   margin: 0.5rem;
   padding: 0.6rem;
-  background-color: #@base01@;
+  background-color: #@zed_surface@;
   color: #@base05@;
-  border: 1px solid #@base02@;
+  border: 1px solid #@zed_border_variant@;
   border-radius: 8px;
   outline: none;
   box-shadow: none;
   font-size: 1rem;
+}
+
+#input:focus {
+  border-color: #@zed_focus_border@;
 }
 
 #inner-box {
@@ -45,10 +49,11 @@ window {
   padding: 0.25rem;
 }
 
+/* Neutral selection; blue stays an indicator, as in Zed. */
 #entry:selected {
-  background-color: #@base0D@;
+  background-color: #@zed_selected@;
 }
 
 #text:selected {
-  color: #@base00@;
+  color: #@base05@;
 }

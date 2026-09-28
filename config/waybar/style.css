@@ -2,7 +2,7 @@
     border: none;
     border-radius: 0;
     font-family: "JetBrains Mono";
-    font-size: 13px;
+    font-size: 14px;
     min-height: 0;
 }
 
@@ -23,11 +23,11 @@ window#waybar {
 #language,
 #battery,
 #power-profiles-daemon {
-    background: #@base01@;
+    background: #@zed_surface@;
     color: #@base05@;
     margin: 6px 4px;
     padding: 2px 8px;
-    border: 1px solid #@base02@;
+    border: 1px solid #@zed_border_variant@;
     border-radius: 8px;
 }
 
@@ -39,41 +39,49 @@ window#waybar {
     padding: 0 8px;
     margin: 4px 2px;
     border-radius: 6px;
-    color: #@base04@;
+    color: #@zed_disabled@;
     background: transparent;
     transition: all 0.2s ease-in-out;
 }
 
 #workspaces button:hover {
-    background: #@base0A@;
-    color: #@base00@;
+    background: #@zed_hover@;
+    color: #@base05@;
 }
 
+/* Graphite marks the selection; the blue rule marks the active workspace —
+   the same division Zed uses in its tab bar. */
 #workspaces button.active {
     min-width: 35px;
-    background: #@base0D@;
-    color: #@base00@;
+    background: #@zed_selected@;
+    color: #@base05@;
+    box-shadow: inset 0 -2px #@base0D@;
 }
 
 #workspaces button.occupied {
-    color: #@base0C@;
+    color: #@base04@;
 }
 
 #mpris:hover,
 #pulseaudio:hover,
 #network:hover {
-    background: #@base02@;
+    background: #@zed_hover@;
 }
 
-#battery.charging { color: #@base0B@; }
-#battery.warning:not(.charging) { color: #@base09@; }
+#battery.charging {
+    color: #@base0B@;
+}
+#battery.warning:not(.charging) {
+    color: #@base09@;
+}
 #battery.critical:not(.charging) {
-    background: #@base08@;
-    color: #@base00@;
+    background: #@zed_error_bg@;
+    border-color: #@zed_error_border@;
+    color: #@base08@;
 }
 
 tooltip {
-    background: #@base01@;
+    background: #@zed_surface@;
     color: #@base05@;
-    border: 1px solid #@base03@;
+    border: 1px solid #@zed_border@;
 }
