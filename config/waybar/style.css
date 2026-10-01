@@ -12,6 +12,7 @@ window#waybar {
 }
 
 #workspaces,
+#window,
 #clock,
 #mpris,
 #tray,
@@ -29,6 +30,13 @@ window#waybar {
     padding: 2px 8px;
     border: 1px solid #@zed_border_variant@;
     border-radius: 8px;
+}
+
+/* The title sits over the wallpaper; without the module surface it is
+   unreadable on light images. No title (empty workspace), no pill. */
+window#waybar.empty #window {
+    background: transparent;
+    border-color: transparent;
 }
 
 #workspaces {
@@ -63,6 +71,7 @@ window#waybar {
 }
 
 #mpris:hover,
+#clock:hover,
 #pulseaudio:hover,
 #network:hover {
     background: #@zed_hover@;
@@ -84,4 +93,9 @@ tooltip {
     background: #@zed_surface@;
     color: #@base05@;
     border: 1px solid #@zed_border@;
+    border-radius: 8px;
+}
+
+tooltip label {
+    padding: 8px 10px;
 }

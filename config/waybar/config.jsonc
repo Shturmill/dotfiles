@@ -23,8 +23,14 @@
     "on-click": "activate",
     "sort-by-number": true,
     "all-outputs": false,
-    "on-scroll-up": "hyprctl dispatch workspace e-1",
-    "on-scroll-down": "hyprctl dispatch workspace e+1",
+    // workspace_step() in hyprland.lua: numbered like the touchpad swipe, and
+    // back from the first workspace wraps to the last occupied one.
+    // The Lua config reads `dispatch` arguments as Lua, so the old
+    // `workspace e-1` no longer parses. Threshold: one touchpad flick pages
+    // one workspace, not five.
+    "smooth-scrolling-threshold": 2,
+    "on-scroll-up": "hyprctl dispatch 'workspace_step(-1)'",
+    "on-scroll-down": "hyprctl dispatch 'workspace_step(1)'",
     "format-icons": { "1": "1", "2": "2", "3": "3", "4": "4", "5": "5" },
   },
   "hyprland/window": {
@@ -40,13 +46,37 @@
   },
   "hyprland/language": { "format-en": "ENG", "format-ru": "RU" },
   "clock": {
-    "interval": 60,
+    // The label only shows minutes, but the tooltip carries seconds and is
+    // rendered on the same tick.
+    "interval": 1,
     "format": "󰃭 {:%d.%m | %H:%M}",
-    "tooltip-format": "<tt><small>{calendar}</small></tt>",
+    // Flyout layout: weekday, date, time, a rule as wide as the calendar
+    // (7 columns x 3 chars - 1), then the month. The whole tooltip is
+    // JetBrains Mono, so the rule lines up.
+    "tooltip-format": "<span color='#@base04@'>{0:%A}</span>\n<span size='large' weight='bold'>{0:%d %B}</span>\n<span size='xx-large' color='#@base06@'>{0:%H:%M:%S}</span>\n<span color='#@zed_border@'>────────────────────</span>\n<tt>{calendar}</tt>",
     "calendar": {
       "mode": "month",
+      // Monday first while keeping English names; the en_US locale alone
+      // would start the week on Sunday.
+      "iso8601": true,
       "on-scroll": 1,
-      "format": { "today": "<span color='#@base0A@'><b><u>{}</u></b></span>" },
+      "format": {
+        "months": "<span color='#@base05@'><b>{}</b></span>",
+        "weekdays": "<span color='#@base04@'>{}</span>",
+        "days": "<span color='#@base05@'>{}</span>",
+        // Graphite plus a rule, like the active workspace; yellow is today.
+        "today": "<span background='#@zed_selected@' color='#@base0A@' underline='single' underline_color='#@base0A@'><b>{}</b></span>",
+      },
+    },
+    // Scroll distance summed before one month turns. At the default 0 every
+    // touchpad delta pages, which flips through months faster than you can read.
+    "smooth-scrolling-threshold": 2,
+    // Wheel pages the tooltip calendar (up = previous month), a click jumps
+    // back to the current one.
+    "actions": {
+      "on-click": "shift_reset",
+      "on-scroll-up": "shift_down",
+      "on-scroll-down": "shift_up",
     },
   },
   // Both are read by polling /proc, and each poll is a wakeup on an otherwise

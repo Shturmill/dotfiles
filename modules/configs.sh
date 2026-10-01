@@ -2,6 +2,25 @@
 
 # Configuration Files Copying
 
+# The configs are templates shared with the NixOS setup: colours are written as
+# #@base05@ / #@zed_surface@ and filled in from lib/palette.env. Only names from
+# that file are replaced, so other @...@ text (wpctl's @DEFAULT_AUDIO_SINK@)
+# survives.
+render_theme_placeholders() {
+    local target="$1"
+    local palette="$SOURCE_DIR/lib/palette.env"
+    local sed_args=()
+    local key value
+
+    while IFS='=' read -r key value; do
+        [[ -z "$key" || "$key" == \#* ]] && continue
+        sed_args+=(-e "s/@${key}@/${value}/g")
+    done < "$palette"
+
+    grep -rlZ -E '@(base0[0-9A-F]|zed_[a-z_]+)@' "$target" 2>/dev/null |
+        xargs -0 -r sed -i "${sed_args[@]}"
+}
+
 copy_configs() {
     if [[ "$SKIP_CONFIGS" == true ]]; then
         log_info "Skipping config file copying"
@@ -53,6 +72,7 @@ copy_configs() {
             fi
 
             if cp -rv "$item" "$target_path"; then
+                render_theme_placeholders "$target_path"
                 log_info "Copied: $basename_item"
             else
                 log_error "Failed to copy: $basename_item"
