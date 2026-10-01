@@ -24,10 +24,15 @@ setup_firefox() {
         fi
     fi
 
-    local ff_profile_dir="$HOME/.mozilla/firefox"
+    # Firefox 147+ keeps profiles under XDG config; older installs use ~/.mozilla
+    local ff_profile_dirs=()
+    local dir
+    for dir in "${XDG_CONFIG_HOME:-$HOME/.config}/mozilla/firefox" "$HOME/.mozilla/firefox"; do
+        [[ -d "$dir" ]] && ff_profile_dirs+=("$dir")
+    done
 
-    if [[ ! -d "$ff_profile_dir" ]]; then
-        log_error "Firefox profile directory not found: $ff_profile_dir"
+    if [[ ${#ff_profile_dirs[@]} -eq 0 ]]; then
+        log_error "Firefox profile directory not found (checked ${XDG_CONFIG_HOME:-$HOME/.config}/mozilla/firefox and $HOME/.mozilla/firefox)"
         log_info "Please run Firefox at least once to create a profile"
         return 1
     fi
@@ -36,10 +41,10 @@ setup_firefox() {
     local prefs_files=()
     while IFS= read -r -d '' file; do
         prefs_files+=("$file")
-    done < <(find "$ff_profile_dir" -name 'prefs.js' -type f -print0)
+    done < <(find "${ff_profile_dirs[@]}" -name 'prefs.js' -type f -print0)
 
     if [[ ${#prefs_files[@]} -eq 0 ]]; then
-        log_error "No prefs.js files found in $ff_profile_dir"
+        log_error "No prefs.js files found in ${ff_profile_dirs[*]}"
         return 1
     fi
 

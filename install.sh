@@ -36,6 +36,7 @@ SKIP_CONFIGS=false
 SKIP_REBOOT=false
 SKIP_DOCKER=false
 SKIP_NERDFONTS=false
+NO_PKG=false
 
 # Source library files
 source "$SOURCE_DIR/lib/logging.sh"
@@ -71,6 +72,8 @@ OPTIONS:
     --skip-docker       Skip Docker installation
     --skip-nerdfonts    Skip Nerd Fonts installation
     --skip-reboot       Skip reboot prompt
+    --no-pkg            Skip everything that needs a package manager (deps,
+                        yay, Docker); enabled automatically without pacman
     --only-deps         Only install dependencies
     --only-yay          Only install yay
     --only-firefox      Only setup Firefox
@@ -100,6 +103,7 @@ EXAMPLES:
     $0 --only-nerdfonts     # Only install Nerd Fonts
     $0 --skip-docker        # Skip Docker installation
     $0 --only-firefox       # Only setup Firefox
+    $0 --no-pkg             # Configs, Firefox, fonts, shell only
 
 EOF
 }
@@ -141,6 +145,9 @@ parse_arguments() {
                 ;;
             --skip-reboot)
                 SKIP_REBOOT=true
+                ;;
+            --no-pkg)
+                NO_PKG=true
                 ;;
             --only-deps)
                 SKIP_YAY=true

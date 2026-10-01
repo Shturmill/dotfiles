@@ -102,21 +102,19 @@ setup_nerdfonts() {
     fi
 
     # Check for required tools
-    if ! command -v curl &> /dev/null; then
-        log_info "Installing curl..."
-        if ! sudo pacman -S --noconfirm curl; then
-            log_error "Failed to install curl"
+    local tool
+    for tool in curl unzip; do
+        command -v "$tool" &> /dev/null && continue
+        if [[ "$NO_PKG" == true ]]; then
+            log_error "$tool not found. Install it with your package manager and re-run"
             return 1
         fi
-    fi
-
-    if ! command -v unzip &> /dev/null; then
-        log_info "Installing unzip..."
-        if ! sudo pacman -S --noconfirm unzip; then
-            log_error "Failed to install unzip"
+        log_info "Installing $tool..."
+        if ! sudo pacman -S --noconfirm "$tool"; then
+            log_error "Failed to install $tool"
             return 1
         fi
-    fi
+    done
 
     # Create fonts directory
     mkdir -p "$FONTS_DIR"

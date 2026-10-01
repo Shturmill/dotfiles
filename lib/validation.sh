@@ -10,6 +10,17 @@ validate_environment() {
         log_warn "Not running on Arch Linux. Some features may not work."
     fi
 
+    # Without pacman only the package-manager-free steps make sense
+    if [[ "$NO_PKG" == false ]] && ! command -v pacman &> /dev/null; then
+        log_warn "pacman not found. Skipping package installation, only configs and user-level setup will run."
+        NO_PKG=true
+    fi
+    if [[ "$NO_PKG" == true ]]; then
+        SKIP_DEPS=true
+        SKIP_YAY=true
+        SKIP_DOCKER=true
+    fi
+
     # Check if source directory exists
     if [[ ! -d "$SOURCE_DIR" ]]; then
         log_error "Source directory $SOURCE_DIR does not exist"
