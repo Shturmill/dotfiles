@@ -18,7 +18,7 @@ hl.config({
 
 local terminal    = "kitty"
 local fileManager = "thunar"
-local menu        = "wofi --show drun"
+local menu        = "zed-recent-projects; wofi --show drun"
 local browser     = "firefox"
 local social      = "Telegram"
 
@@ -265,8 +265,9 @@ hl.bind(mainMod .. " + R",         hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + Escape",    hl.dsp.exec_cmd("wlogout"))
 hl.bind(mainMod .. " + P",         hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J",         hl.dsp.layout("togglesplit"))
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot --clipboard-only -m region"))
-hl.bind(mainMod .. " + CTRL + SHIFT + S", hl.dsp.exec_cmd("hyprshot --raw -m region | satty --filename - --fullscreen current"))
+hl.bind(mainMod .. " + K",         hl.dsp.layout("swapsplit"))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("hyprshot --freeze --clipboard-only -m region"))
+hl.bind(mainMod .. " + CTRL + SHIFT + S", hl.dsp.exec_cmd("hyprshot --freeze --raw -m region | satty --filename - --fullscreen current-screen"))
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a"))
 
 -- Hyprlang `fullscreen, 1` is the maximized/non-covering mode, `fullscreen, 0`
@@ -274,7 +275,7 @@ hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("hyprpicker -a"))
 hl.bind(mainMod .. " + F",         hl.dsp.window.fullscreen({ mode = "maximized",  action = "toggle" }))
 hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 
-hl.bind(mainMod .. " + V", hl.dsp.exec_cmd([[cliphist list | wofi --dmenu --pre-display-cmd "echo '%s' | cut -f 2" | cliphist decode | wl-copy]]))
+hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("cliphist-wofi"))
 
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
 hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
@@ -305,11 +306,18 @@ hl.bind("XF86AudioMicMute",      hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl s 10%-"))
 hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl s +10%"))
 
--- These were `bindl`: they keep working while the session is locked.
+-- `locked` (Hyprlang's `bindl`): media keys keep working on the lock screen.
 hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"),       { locked = true })
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
+
+-- Lid: logind locks (HandleLidSwitch=lock, modules/power.nix) instead of
+-- suspending, so long-running agents keep going; the panel itself is switched
+-- off here. Only eDP-1, so a closed lid with HDMI attached is clamshell mode.
+-- `locked`, because by the time the lid opens hyprlock is up.
+hl.bind("switch:on:Lid Switch",  hl.dsp.dpms({ action = "off", monitor = "eDP-1" }), { locked = true })
+hl.bind("switch:off:Lid Switch", hl.dsp.dpms({ action = "on",  monitor = "eDP-1" }), { locked = true })
 
 
 --------------------------------

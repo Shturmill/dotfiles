@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Exit status = power source: 0 on AC, 1 on battery. Written for hypridle's
+# `on-ac || ...` / `on-ac && ...` listeners, which have no other way to ask.
+# Reads sysfs rather than upower/PPD, so it also answers before the session
+# bus exists.
+#
+# 1 means "running on a battery right now", nothing weaker: a machine with no
+# system battery (a desktop, a VM, power_supply not exposed) answers 0, since
+# hypridle suspends on 1.
+
+battery=false
+
+for supply in /sys/class/power_supply/*; do
+    [ -e "$supply" ] || continue
+
+    # Scope "Device" is a peripheral's own supply (mouse, headset).
+    scope=$(cat "$supply/scope" 2>/dev/null || echo "System")
+    if [ "$scope" = "Device" ]; then
+        continue
+    fi
+
+    # Charger = barrel jack (Mains) or USB-C PD.
+    type=$(cat "$supply/type" 2>/dev/null || echo "")
+    case "$type" in
+        Battery)
+            battery=true
+            continue
+            ;;
+        Mains | USB | USB_PD | USB_PD_DRP) ;;
+        *) continue ;;
+    esac
+
+    if [ "$(cat "$supply/online" 2>/dev/null)" = "1" ]; then
+        exit 0
+    fi
+done
+
+if [ "$battery" = true ]; then
+    exit 1
+fi
+exit 0

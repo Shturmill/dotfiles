@@ -1,0 +1,139 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# The clipboard history picker behind SUPER+V (hyprland.lua), fed by the
+# wl-paste watchers started there. Return copies the selected entry back,
+# Shift+Delete removes entries from the history, as many as wanted before
+# leaving with Return or Escape.
+#
+# cliphist's own wofi recipe passes every entry through --pre-display-cmd:
+# one shell per entry, with the clipboard text spliced into the command line
+# (a quote breaks it, a crafted one runs), and wofi keeps the command's
+# trailing newline, which doubles every row. Instead the menu is built here
+# in one pass and wofi prints line numbers, so labels never have to
+# round-trip into an id.
+#
+# Image rows are wofi's image escapes, `img:<path>:text:<label>`, with a
+# cached thumbnail; text rows are plain `text:<label>`. wofi has no escaping
+# for these fields: a `text`/`img` segment between colons inside the
+# clipboard text would start a new one, so such segments get a zero-width
+# space.
+#
+# Shift+Delete (key_delete) and per-row heights (uniform_rows=false) come from
+# wofi patches carried by the NixOS config (modules/desktop.nix); a stock wofi
+# ignores both options, so there rows only get picked, not removed.
+
+menu=$(cat <<'AWK'
+BEGIN { FS = "\t"; zwsp = "\342\200\213" }
+
+function plain(s,    n, i, parts, out) {
+  n = split(s, parts, ":")
+  out = ""
+  for (i = 1; i <= n; i++) {
+    if (i < n && parts[i] ~ /^(img|img-noscale|img-base64|img-base64-noscale|text)$/)
+      parts[i] = parts[i] zwsp
+    out = out (i == 1 ? "" : ":") parts[i]
+  }
+  return out
+}
+
+{
+  id = $1
+  preview = substr($0, length(id) + 2)
+}
+
+# A browser copying an image also offers it as text/html; the image itself
+# is the next entry.
+preview ~ /^<meta http-equiv=/ { next }
+
+# [[ binary data 23 KiB png 615x545 ]]
+preview ~ /^\[\[ binary data [^ ]+ [^ ]+ (png|jpeg|jpg|gif|bmp|webp) [0-9]+x[0-9]+ \]\]$/ {
+  split(preview, w, " ")
+  dim = w[7]
+  sub(/x/, "×", dim)
+  print id > images
+  print id > ids
+  print "img:" thumbs "/" id ".png:text:" toupper(w[6]) " · " dim " · " w[4] " " w[5]
+  next
+}
+
+{
+  print id > ids
+  print "text:" plain(preview)
+}
+AWK
+)
+
+
+thumbs=${XDG_CACHE_HOME:-$HOME/.cache}/cliphist/thumbs
+mkdir -p "$thumbs"
+
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+# Previews can carry NUL bytes from binary text, which bash cannot hold.
+cliphist list | tr -d '\0' |
+  awk -v thumbs="$thumbs" \
+    -v ids="$work/ids" -v images="$work/images" \
+    "$menu" >"$work/menu"
+touch "$work/ids" "$work/images"
+
+# Thumbnails are made once per entry, in parallel on the first run, and
+# letterboxed to a square so image rows line up.
+# shellcheck disable=SC2016 # $1/$2 belong to the inner sh
+while IFS= read -r id; do
+  [[ -s $thumbs/$id.png ]] || printf '%s\n' "$id"
+done <"$work/images" |
+  xargs -r -P "$(nproc)" -I{} sh -c '
+    printf "%s\t\n" "$1" | cliphist decode |
+      magick "-[0]" -thumbnail 128x128 -background none -gravity center \
+        -extent 128x128 "PNG:$2/$1.part" && mv -f "$2/$1.part" "$2/$1.png"
+    rm -f "$2/$1.part"
+  ' _ {} "$thumbs" || true
+
+# Drop the thumbnails of entries cliphist no longer has.
+declare -A keep=()
+while IFS= read -r id; do keep[$id]=1; done <"$work/images"
+for thumb in "$thumbs"/*.png; do
+  [[ -e $thumb ]] || continue
+  id=${thumb##*/}
+  [[ -v keep[${id%.png}] ]] || rm -f "$thumb"
+done
+
+mapfile -t ids <"$work/ids"
+
+# Clipboard text is not markup, and the search matches the label, not
+# the thumbnail path in front of it. key_delete is the wofi patch in
+# modules/desktop.nix: each removed row prints "-<line>".
+# Escape exits 1, but rows removed before it still count.
+out=$(
+  wofi --dmenu --prompt "Clipboard · Shift+Del removes" --no-custom-entry \
+    -D dmenu-print_line_num=true -D parse_search=true \
+    -D allow_markup=false -D image_size=56 -D height=600 \
+    -D uniform_rows=false -D key_delete=Shift-Delete <"$work/menu"
+) || true
+
+deleted=()
+pick=
+while IFS= read -r line; do
+  n=${line#-}
+  if [[ ! $n =~ ^[0-9]+$ || -z ${ids[n]-} ]]; then
+    continue
+  elif [[ $line == -* ]]; then
+    deleted+=("${ids[n]}")
+  else
+    pick=${ids[n]}
+  fi
+done <<<"$out"
+
+if ((${#deleted[@]})); then
+  printf '%s\t\n' "${deleted[@]}" | cliphist delete
+  for id in "${deleted[@]}"; do rm -f "$thumbs/$id.png"; done
+fi
+
+# Escape picks nothing; never hand wl-copy an empty clipboard.
+[[ -n $pick ]] || exit 0
+printf '%s\t\n' "$pick" | cliphist decode | wl-copy
+

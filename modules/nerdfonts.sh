@@ -1,4 +1,4 @@
-#!/bin/bash
+# shellcheck shell=bash
 
 # Nerd Fonts Installation
 
@@ -70,8 +70,9 @@ setup_nerdfonts() {
     echo
 
     local selected_fonts=()
+    local choice choices=()
 
-    read -p "Enter your choice (numbers separated by space, 'a' for all, 'p' for popular, 'q' to cancel): " -r choice
+    ask choice "Enter your choice (numbers separated by space, 'a' for all, 'p' for popular, 'q' to cancel):" q
 
     case "$choice" in
         q|Q)
@@ -85,8 +86,9 @@ setup_nerdfonts() {
             selected_fonts=("JetBrainsMono" "FiraCode" "Hack" "CascadiaCode" "Meslo")
             ;;
         *)
-            # Parse space-separated numbers
-            for num in $choice; do
+            # Parse numbers with read -a (no glob expansion of `*`)
+            read -ra choices <<< "$choice"
+            for num in "${choices[@]}"; do
                 if [[ "$num" =~ ^[0-9]+$ ]] && [[ "$num" -ge 1 ]] && [[ "$num" -le "${#available_fonts[@]}" ]]; then
                     selected_fonts+=("${available_fonts[$((num-1))]}")
                 else
@@ -99,6 +101,14 @@ setup_nerdfonts() {
     if [[ ${#selected_fonts[@]} -eq 0 ]]; then
         log_warn "No fonts selected"
         return 0
+    fi
+
+    # SHA-256.txt of the release, filtered to the fonts above, kept in the repo
+    # so a swapped asset cannot pass by shipping its own checksum.
+    local checksums="$SOURCE_DIR/fonts/nerdfonts-${NERD_FONTS_VERSION}.sha256"
+    if [[ ! -f "$checksums" ]]; then
+        log_error "Checksum file not found: $checksums"
+        return 1
     fi
 
     # Check for required tools
@@ -148,6 +158,16 @@ setup_nerdfonts() {
                 continue
             fi
 
+            local expected actual
+            expected=$(awk -v name="${font}.zip" '$2 == name { print $1 }' "$checksums")
+            actual=$(sha256sum "$temp_zip" | cut -d' ' -f1)
+            if [[ -z "$expected" ]] || [[ "$actual" != "$expected" ]]; then
+                log_error "Checksum mismatch for $font (expected ${expected:-none}, got $actual)"
+                failed_fonts+=("$font")
+                rm -f "$temp_zip"
+                continue
+            fi
+
             # Create temp directory and extract
             mkdir -p "$temp_dir"
             if ! unzip -q -o "$temp_zip" -d "$temp_dir"; then
@@ -189,10 +209,13 @@ setup_nerdfonts() {
         # Show installed fonts
         if confirm "Show list of installed font files?" "N"; then
             echo -e "${CYAN}Installed fonts in $FONTS_DIR:${NC}"
-            ls -1 "$FONTS_DIR"/*.{ttf,otf} 2>/dev/null | head -20
-            local font_count=$(ls -1 "$FONTS_DIR"/*.{ttf,otf} 2>/dev/null | wc -l)
-            if [[ $font_count -gt 20 ]]; then
-                echo "  ... and $((font_count - 20)) more files"
+            local font_files=()
+            mapfile -t font_files < <(find "$FONTS_DIR" -maxdepth 1 -type f \( -name '*.ttf' -o -name '*.otf' \) | sort)
+            if [[ ${#font_files[@]} -gt 0 ]]; then
+                printf '%s\n' "${font_files[@]:0:20}"
+            fi
+            if [[ ${#font_files[@]} -gt 20 ]]; then
+                echo "  ... and $(( ${#font_files[@]} - 20 )) more files"
             fi
         fi
     )

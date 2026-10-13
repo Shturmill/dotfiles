@@ -1,4 +1,4 @@
-#!/bin/bash
+# shellcheck shell=bash
 
 # Shell Change to Fish
 

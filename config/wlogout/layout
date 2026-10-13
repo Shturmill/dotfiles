@@ -1,0 +1,5 @@
+{"action":"hyprlock","keybind":"l","label":"lock","text":"󰌾\nLock"}
+{"action":"systemctl suspend","keybind":"u","label":"suspend","text":"󰒲\nSuspend"}
+{"action":"hyprctl dispatch 'hl.dsp.exit()'","keybind":"e","label":"logout","text":"󰍃\nLogout"}
+{"action":"systemctl reboot","keybind":"r","label":"reboot","text":"󰜉\nReboot"}
+{"action":"systemctl poweroff","keybind":"s","label":"shutdown","text":"󰐥\nShutdown"}

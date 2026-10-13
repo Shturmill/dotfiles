@@ -1,6 +1,11 @@
-#!/bin/bash
+# shellcheck shell=bash
 
 # Firefox Preferences Setup
+# firefox.txt goes into user.js, not prefs.js: user.js is read every start and
+# overrides prefs.js, so nothing to merge and no running browser can undo it.
+
+readonly FIREFOX_BLOCK_BEGIN="// BEGIN dotfiles: firefox.txt"
+readonly FIREFOX_BLOCK_END="// END dotfiles"
 
 setup_firefox() {
     if [[ "$SKIP_FIREFOX" == true ]]; then
@@ -10,21 +15,7 @@ setup_firefox() {
 
     log_info "Setting up Firefox preferences..."
 
-    # Check if Firefox is running
-    if is_process_running "firefox"; then
-        log_warn "Firefox is currently running!"
-        if confirm "Firefox must be closed to apply settings. Close it now?"; then
-            if [[ "$DRY_RUN" == false ]]; then
-                killall firefox 2>/dev/null || true
-                sleep 2
-            fi
-        else
-            log_warn "Firefox setup skipped - browser is running"
-            return 0
-        fi
-    fi
-
-    # Firefox 147+ keeps profiles under XDG config; older installs use ~/.mozilla
+    # Firefox 147+ keeps profiles under XDG config; older installs in ~/.mozilla
     local ff_profile_dirs=()
     local dir
     for dir in "${XDG_CONFIG_HOME:-$HOME/.config}/mozilla/firefox" "$HOME/.mozilla/firefox"; do
@@ -33,18 +24,18 @@ setup_firefox() {
 
     if [[ ${#ff_profile_dirs[@]} -eq 0 ]]; then
         log_error "Firefox profile directory not found (checked ${XDG_CONFIG_HOME:-$HOME/.config}/mozilla/firefox and $HOME/.mozilla/firefox)"
-        log_info "Please run Firefox at least once to create a profile"
+        log_info "Please run Firefox at least once to create a profile, then re-run with --only-firefox"
         return 1
     fi
 
-    # Find all prefs.js files
+    # A profile that has been started once has a prefs.js
     local prefs_files=()
     while IFS= read -r -d '' file; do
         prefs_files+=("$file")
     done < <(find "${ff_profile_dirs[@]}" -name 'prefs.js' -type f -print0)
 
     if [[ ${#prefs_files[@]} -eq 0 ]]; then
-        log_error "No prefs.js files found in ${ff_profile_dirs[*]}"
+        log_error "No Firefox profiles with prefs.js found in ${ff_profile_dirs[*]}"
         return 1
     fi
 
@@ -53,69 +44,74 @@ setup_firefox() {
     if [[ ${#prefs_files[@]} -gt 1 ]]; then
         log_warn "Multiple Firefox profiles found:"
         for i in "${!prefs_files[@]}"; do
-            echo "  [$i] ${prefs_files[$i]}"
+            echo "  [$i] $(dirname "${prefs_files[$i]}")"
         done
-        echo -n "Select profile [0]: "
-        read -r selection
-        selection=${selection:-0}
-        if [[ ! "$selection" =~ ^[0-9]+$ ]] || (( selection < 0 || selection >= ${#prefs_files[@]} )); then
+        local selection
+        ask selection "Select profile [0]:" 0
+        if [[ ! "$selection" =~ ^[0-9]+$ ]] || (( selection >= ${#prefs_files[@]} )); then
             log_error "Invalid Firefox profile selection: $selection"
             return 1
         fi
         prefs_file="${prefs_files[$selection]}"
     fi
 
-    log_info "Using profile: $prefs_file"
+    local user_js
+    user_js="$(dirname "$prefs_file")/user.js"
+    log_info "Using profile: $(dirname "$prefs_file")"
 
     if [[ "$DRY_RUN" == true ]]; then
-        log_debug "DRY-RUN: Would modify $prefs_file"
+        log_debug "DRY-RUN: Would write $SOURCE_DIR/firefox.txt into $user_js"
         return 0
     fi
 
-    # Create backup
-    create_backup "$prefs_file"
+    write_firefox_user_js "$user_js" "$SOURCE_DIR/firefox.txt"
+
+    if is_process_running "firefox"; then
+        log_warn "Firefox is running; the preferences apply after it is restarted"
+    fi
+}
+
+# Replace the dotfiles block in <user.js>, keeping the rest. Built next to the
+# old file so the mv is an atomic rename; keeps the old mode (0600 if new).
+write_firefox_user_js() {
+    local user_js="$1"
+    local new_prefs="$2"
 
     (
-        # Smart merge: remove duplicate preferences
-        local temp_dir
-        temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/firefox-prefs.XXXXXXXXXX")
-        local temp_prefs="$temp_dir/prefs.js"
-        local new_prefs="$SOURCE_DIR/firefox.txt"
-        trap 'rm -rf "$temp_dir"' EXIT
+        local temp_js
+        temp_js=$(mktemp "$user_js.XXXXXXXXXX")
+        trap 'rm -f "$temp_js"' EXIT
 
-        log_info "Merging preferences (avoiding duplicates)..."
-
-        # Extract preference keys from new prefs
-        local -A new_keys=()
-        while IFS= read -r line; do
-            if [[ "$line" =~ user_pref\(\"([^\"]+)\" ]]; then
-                new_keys["${BASH_REMATCH[1]}"]=1
-            fi
-        done < "$new_prefs"
-
-        # Copy existing prefs, excluding ones we're about to add
-        while IFS= read -r line; do
-            local skip=false
-            if [[ "$line" =~ user_pref\(\"([^\"]+)\" ]]; then
-                local existing_key="${BASH_REMATCH[1]}"
-                if [[ -n "${new_keys[$existing_key]+x}" ]]; then
-                    skip=true
-                    log_debug "Removing duplicate preference: $existing_key"
+        {
+            if [[ -f "$user_js" ]]; then
+                # Exit 3 on a BEGIN without END (the rest would be dropped).
+                if ! awk -v begin="$FIREFOX_BLOCK_BEGIN" -v end="$FIREFOX_BLOCK_END" '
+                    $0 == begin { skip = 1 }
+                    !skip { print }
+                    $0 == end { skip = 0 }
+                    END { exit skip ? 3 : 0 }
+                ' "$user_js"; then
+                    log_error "$user_js has '$FIREFOX_BLOCK_BEGIN' without '$FIREFOX_BLOCK_END'; fix it by hand and re-run"
+                    exit 1
                 fi
             fi
-            if [[ "$skip" == false ]]; then
-                echo "$line" >> "$temp_prefs"
-            fi
-        done < "$prefs_file"
+            printf '%s\n' "$FIREFOX_BLOCK_BEGIN"
+            # awk, not cat: also terminates a last line without a newline
+            awk '{ print }' "$new_prefs"
+            printf '%s\n' "$FIREFOX_BLOCK_END"
+        } > "$temp_js"
 
-        # Append new preferences
-        echo "" >> "$temp_prefs"
-        echo "// Added by dotfiles installer on $(date)" >> "$temp_prefs"
-        cat "$new_prefs" >> "$temp_prefs"
+        if [[ -f "$user_js" ]] && cmp -s "$temp_js" "$user_js"; then
+            log_info "Firefox preferences already up to date"
+            exit 0
+        fi
 
-        # Replace original file
-        mv "$temp_prefs" "$prefs_file"
+        if [[ -f "$user_js" ]]; then
+            create_backup "$user_js" "firefox/$(basename "$(dirname "$user_js")")/user.js"
+            chmod --reference="$user_js" "$temp_js"
+        fi
+        mv -f "$temp_js" "$user_js"
+        record_managed "$user_js"
+        log_info "Firefox preferences written to $user_js"
     )
-
-    log_info "Firefox preferences applied successfully"
 }

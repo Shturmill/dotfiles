@@ -1,6 +1,6 @@
 show=drun
-width=45%
-height=40%
+width=600
+height=420
 prompt=Search...
 normal_window=true
 location=center
@@ -9,7 +9,6 @@ allow_images=true
 image_size=32
 insensitive=true
 allow_markup=true
-no_actions=true
 orientation=vertical
 halign=fill
 content_halign=fill

@@ -1,4 +1,4 @@
-#!/bin/bash
+# shellcheck shell=bash
 
 # Docker Installation and Configuration
 
@@ -14,7 +14,7 @@ setup_docker() {
     echo -e "${MAGENTA}║         Docker Installation           ║${NC}"
     echo -e "${MAGENTA}╚═══════════════════════════════════════╝${NC}"
 
-    if ! confirm "Install and configure Docker?"; then
+    if ! confirm "Install and configure Docker?" "N"; then
         log_info "Docker installation skipped by user"
         return 0
     fi
@@ -38,7 +38,7 @@ setup_docker() {
     fi
     log_info "Docker packages installed"
 
-    # Create docker group if it doesn't exist
+    # Create docker group if missing
     log_step "Configuring docker group..."
     if ! getent group docker > /dev/null 2>&1; then
         sudo groupadd docker
@@ -48,36 +48,29 @@ setup_docker() {
     fi
 
     # Add current user to docker group
-    log_step "Adding user '$USER' to docker group..."
+    log_step "Docker group membership..."
     if id -nG "$USER" | grep -qw "docker"; then
         log_info "User '$USER' is already in docker group"
     else
-        sudo usermod -aG docker "$USER"
-        log_info "User '$USER' added to docker group"
-        log_warn "You need to log out and back in for group changes to take effect"
-        log_warn "Or run: newgrp docker"
+        log_warn "Members of the docker group can mount / into a container and become root without a password."
+        log_warn "Without it use 'sudo docker', or rootless Docker: https://docs.docker.com/engine/security/rootless/"
+        if confirm "Add '$USER' to the docker group anyway?" "N"; then
+            sudo usermod -aG docker "$USER"
+            log_info "User '$USER' added to docker group"
+            log_warn "You need to log out and back in for group changes to take effect"
+            log_warn "Or run: newgrp docker"
+        else
+            log_info "User '$USER' not added to docker group"
+        fi
     fi
 
-    # Enable and start Docker service
-    log_step "Enabling Docker service..."
-    if ! sudo systemctl enable docker.service; then
-        log_error "Failed to enable Docker service"
+    # docker.service pulls in containerd itself
+    log_step "Enabling and starting Docker service..."
+    if ! sudo systemctl enable --now docker.service; then
+        log_error "Failed to enable/start Docker service"
         return 1
     fi
-    log_info "Docker service enabled"
-
-    log_step "Starting Docker service..."
-    if ! sudo systemctl start docker.service; then
-        log_error "Failed to start Docker service"
-        return 1
-    fi
-    log_info "Docker service started"
-
-    # Enable containerd service
-    log_step "Enabling containerd service..."
-    if ! sudo systemctl enable containerd.service; then
-        log_warn "Failed to enable containerd service (may already be enabled)"
-    fi
+    log_info "Docker service enabled and started"
 
     # Configure Docker daemon
     log_step "Configuring Docker daemon..."
@@ -115,7 +108,7 @@ EOF
         log_info "Docker daemon configuration already exists"
     fi
 
-    # Step 7: Verify Docker installation
+    # Verify Docker installation
     log_step "Verifying Docker installation..."
 
     if docker --version; then
@@ -132,7 +125,7 @@ EOF
         log_warn "Docker Compose check failed"
     fi
 
-    # Check if Docker daemon is running
+    # Check Docker daemon is running
     if sudo docker info > /dev/null 2>&1; then
         log_info "Docker daemon is running"
     else
@@ -157,10 +150,11 @@ EOF
     echo -e "  • Docker version: $(docker --version | cut -d' ' -f3 | tr -d ',')"
     echo -e "  • Docker Compose: $(docker compose version --short 2>/dev/null || echo 'N/A')"
     echo -e "  • Service status: $(systemctl is-active docker.service)"
-    echo -e "  • User in docker group: $(id -nG "$USER" | grep -qw docker && echo 'Yes' || echo 'No (relogin required)')"
+    echo -e "  • User in docker group: $(id -nG "$USER" | grep -qw docker && echo 'Yes' || echo 'No (use sudo docker)')"
     echo
 
-    if ! id -nG "$USER" | grep -qw "docker"; then
+    # `id -nG $USER` reads the group database; `id -nG` only this session
+    if id -nG "$USER" | grep -qw "docker" && ! id -nG | grep -qw "docker"; then
         echo -e "${YELLOW}Important: Log out and back in to use Docker without sudo${NC}"
         echo -e "${YELLOW}Or run: newgrp docker${NC}"
     fi

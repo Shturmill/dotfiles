@@ -1,11 +1,9 @@
-#!/bin/bash
+# shellcheck shell=bash
 
 # Configuration Files Copying
 
-# The configs are templates shared with the NixOS setup: colours are written as
-# #@base05@ / #@zed_surface@ and filled in from lib/palette.env. Only names from
-# that file are replaced, so other @...@ text (wpctl's @DEFAULT_AUDIO_SINK@)
-# survives.
+# Colours are #@base05@-style placeholders filled from lib/palette.env; only
+# names from that file are replaced, so @DEFAULT_AUDIO_SINK@ etc. survives.
 render_theme_placeholders() {
     local target="$1"
     local palette="$SOURCE_DIR/lib/palette.env"
@@ -17,8 +15,46 @@ render_theme_placeholders() {
         sed_args+=(-e "s/@${key}@/${value}/g")
     done < "$palette"
 
-    grep -rlZ -E '@(base0[0-9A-F]|zed_[a-z_]+)@' "$target" 2>/dev/null |
+    # A config with no placeholders (satty) makes grep exit 1; pipefail aborts.
+    { grep -rlZ -E '@(base0[0-9A-F]|zed_[a-z_]+)@' "$target" 2>/dev/null || true; } |
         xargs -0 -r sed -i "${sed_args[@]}"
+}
+
+# sync_tree <stage> <target> <backup>: mv staged files into the target, one
+# rename per file, so a watcher never sees an empty dir; unchanged files stay.
+sync_tree() {
+    local stage="$1"
+    local target="$2"
+    local backup_name="$3"
+    local rel src dst
+    local changed=0
+
+    while IFS= read -r -d '' rel; do
+        src="$stage/$rel"
+        dst="$target/$rel"
+
+        if [[ -f "$dst" ]] && cmp -s "$src" "$dst" &&
+            [[ "$(stat -c %a "$src")" == "$(stat -c %a "$dst")" ]]; then
+            log_debug "Unchanged: $dst"
+            continue
+        fi
+        changed=$((changed + 1))
+
+        if [[ "$DRY_RUN" == true ]]; then
+            log_info "DRY-RUN: Would update $dst"
+            continue
+        fi
+
+        create_backup "$dst" "$backup_name/$rel"
+        mkdir -p "$(dirname "$dst")"
+        mv -fT "$src" "$dst"
+        record_managed "$dst"
+        log_info "Updated: $dst"
+    done < <(find "$stage" \( -type f -o -type l \) -printf '%P\0')
+
+    if (( changed == 0 )); then
+        log_info "Already up to date: $target"
+    fi
 }
 
 copy_configs() {
@@ -29,12 +65,6 @@ copy_configs() {
 
     log_info "Copying configuration files..."
 
-    if [[ "$DRY_RUN" == true ]]; then
-        log_debug "DRY-RUN: Would create config target directory: $TARGET_DIR"
-    else
-        mkdir -p "$TARGET_DIR"
-    fi
-
     local config_dir="$SOURCE_DIR/config"
 
     if [[ ! -d "$config_dir" ]]; then
@@ -42,47 +72,69 @@ copy_configs() {
         return 0
     fi
 
-    # Get list of items inside config/
-    local config_items=()
-    while IFS= read -r -d '' item; do
-        config_items+=("$item")
-    done < <(find "$config_dir" -mindepth 1 -maxdepth 1 -print0)
-
-    if [[ ${#config_items[@]} -eq 0 ]]; then
-        log_warn "No config files/directories found in $config_dir"
-        return 0
-    fi
-
-    log_info "Found ${#config_items[@]} config item(s) to copy"
-
-    for item in "${config_items[@]}"; do
-        local basename_item=$(basename "$item")
-        local target_path="$TARGET_DIR/$basename_item"
-
-        if [[ "$DRY_RUN" == true ]]; then
-            create_backup "$target_path"
-            if [[ -e "$target_path" ]]; then
-                log_debug "DRY-RUN: Would remove existing target $target_path"
-            fi
-            log_debug "DRY-RUN: Would copy $item -> $target_path"
-        else
-            if [[ -e "$target_path" ]]; then
-                create_backup "$target_path"
-                rm -rf "$target_path"
-            fi
-
-            if cp -rv "$item" "$target_path"; then
-                render_theme_placeholders "$target_path"
-                log_info "Copied: $basename_item"
-            else
-                log_error "Failed to copy: $basename_item"
-            fi
-        fi
-    done
-
+    # Stage inside TARGET_DIR so sync_tree's mv is a same-filesystem rename.
+    local stage_parent="$TARGET_DIR"
     if [[ "$DRY_RUN" == true ]]; then
-        log_info "DRY-RUN: Configuration files would be copied to $TARGET_DIR"
+        stage_parent="${TMPDIR:-/tmp}"
     else
-        log_info "Configuration files copied to $TARGET_DIR"
+        mkdir -p "$TARGET_DIR"
     fi
+
+    (
+        local stage
+        stage=$(mktemp -d "$stage_parent/.dotfiles-stage.XXXXXXXXXX")
+        trap 'rm -rf "$stage"' EXIT
+
+        cp -a "$config_dir/." "$stage/"
+        render_theme_placeholders "$stage"
+        sync_tree "$stage" "$TARGET_DIR" "config"
+    )
+
+    install_scripts
+}
+
+# A fresh login shell's PATH, which Hyprland inherits from a TTY or display
+# manager. No stdin tty and a timeout, so a tty1 exec stays off.
+login_path() {
+    local user login_shell
+    user=$(id -un)
+    login_shell=$(getent passwd "$user" | cut -d: -f7)
+    # shellcheck disable=SC2016 # $PATH is for the login shell to expand
+    timeout 5 env -i HOME="$HOME" USER="$user" LOGNAME="$user" TERM=dumb \
+        "${login_shell:-/bin/bash}" -lc 'printf "%s" "$PATH"' \
+        </dev/null 2>/dev/null || true
+}
+
+# Helpers the configs call by name (on-ac, cliphist-wofi, zed-recent-projects):
+# NixOS packages them, here they go to ~/.local/bin, which must be on PATH.
+install_scripts() {
+    local bin_dir="$SOURCE_DIR/bin"
+    local target_bin="$HOME/.local/bin"
+
+    [[ -d "$bin_dir" ]] || return 0
+
+    local stage_parent="$target_bin"
+    if [[ "$DRY_RUN" == true ]]; then
+        stage_parent="${TMPDIR:-/tmp}"
+    else
+        mkdir -p "$target_bin"
+    fi
+
+    (
+        local stage script
+        stage=$(mktemp -d "$stage_parent/.dotfiles-stage.XXXXXXXXXX")
+        trap 'rm -rf "$stage"' EXIT
+
+        for script in "$bin_dir"/*; do
+            install -m 755 "$script" "$stage/"
+        done
+        sync_tree "$stage" "$target_bin" "bin"
+    )
+
+    local session_path
+    session_path=$(login_path)
+    case ":$session_path:" in
+        *":$target_bin:"*) ;;
+        *) log_warn "$target_bin is not on your login PATH; add it, or Hyprland binds that call these scripts will fail" ;;
+    esac
 }

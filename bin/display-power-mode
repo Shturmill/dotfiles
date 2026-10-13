@@ -1,0 +1,105 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# Puts the internal panel on the refresh rate matching the power source:
+# 120 Hz on 2560x1600 costs real watts at idle, and light desktop work does not
+# need it while unplugged. Run from hyprland.lua's autostart; needs on-ac.
+#
+# Rates are read back from the panel's own mode list, never invented, and only
+# the rate is rewritten — resolution, position and scale are echoed back as
+# Hyprland reports them, so this cannot drift from hyprland.lua. External
+# outputs are left alone (a docked monitor is on mains anyway).
+
+
+if on-ac; then
+  target="max"
+else
+  target="60"
+fi
+
+# "Monitor eDP-1 (ID 0):" / "<tab>2560x1600@120.00000 at 696x1440" /
+# "<tab>scale: 1.25" / "<tab>availableModes: 2560x1600@120.00Hz ..."
+# -> name, resolution, current rate, position, scale, modes
+# shellcheck disable=SC2016  # $1/$2 are awk fields, not shell variables
+parse='
+  /^Monitor / {
+    name = $2
+    getline
+    split($1, m, "@")
+    res = m[1]; cur = m[2]; pos = $3
+    next
+  }
+  /^[ \t]*scale:/ { scale = $2 }
+  /^[ \t]*availableModes:/ {
+    $1 = ""
+    print name "\t" res "\t" cur "\t" pos "\t" scale "\t" $0
+  }
+'
+
+switch_instance() {
+  local name res cur pos scale modes rates rate
+  local monitors
+
+  monitors=$(hyprctl monitors 2>/dev/null) || return 0
+
+  while IFS=$'\t' read -r name res cur pos scale modes; do
+    case "$name" in
+      eDP*) ;;
+      *) continue ;;
+    esac
+
+    rates=$(
+      printf '%s\n' "$modes" | tr ' ' '\n' |
+        sed -n "s/^$res@\([0-9][0-9.]*\)Hz\$/\1/p"
+    )
+    [ -n "$rates" ] || continue
+
+    if [ "$target" = "max" ]; then
+      rate=$(printf '%s\n' "$rates" | sort -g | tail -n 1)
+    else
+      # Nearest rate the panel actually offers, so a panel with no 60 Hz
+      # mode lands on its closest one instead of failing a modeset.
+      rate=$(
+        printf '%s\n' "$rates" |
+          awk -v t="$target" '
+            BEGIN { best = ""; bd = 1e9 }
+            { d = $1 - t; if (d < 0) d = -d; if (d < bd) { bd = d; best = $1 } }
+            END { print best }
+          '
+      )
+    fi
+    [ -n "$rate" ] || continue
+
+    # Skip a no-op modeset: 120.00000 vs 120.00.
+    if [ "$(printf '%.2f' "$cur")" = "$(printf '%.2f' "$rate")" ]; then
+      continue
+    fi
+
+    # `hyprctl keyword` refuses a Lua config ("keyword can't work with
+    # non-legacy parsers"), so the runtime edit goes through the Lua API.
+    # Position and scale are echoed back unchanged.
+    hyprctl eval "hl.monitor({ output = \"$name\", mode = \"$res@$rate\", position = \"$pos\", scale = $scale })" >/dev/null || true
+  done <<< "$(printf '%s\n' "$monitors" | awk "$parse")"
+}
+
+if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+  # Called inside the session (autostart, keybind).
+  switch_instance
+else
+  # Called from display-power-mode.service (charger uevent, resume), as root
+  # outside any session: talk to every live Hyprland socket we can find.
+  for runtime in /run/user/*; do
+    [ -d "$runtime/hypr" ] || continue
+    export XDG_RUNTIME_DIR="$runtime"
+
+    for instance in "$runtime"/hypr/*; do
+      [ -S "$instance/.socket.sock" ] || continue
+      HYPRLAND_INSTANCE_SIGNATURE=$(basename "$instance")
+      export HYPRLAND_INSTANCE_SIGNATURE
+      switch_instance
+    done
+  done
+fi
+

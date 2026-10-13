@@ -1,0 +1,25 @@
+anchor=top-right
+background-color=#@zed_surface@
+border-color=#@zed_border@
+border-radius=8
+border-size=1
+default-timeout=5000
+font=JetBrains Mono 11
+height=120
+icons=true
+layer=overlay
+margin=12
+markup=true
+max-visible=5
+padding=12
+text-color=#@base05@
+width=360
+
+[urgency=critical]
+background-color=#@zed_error_bg@
+border-color=#@zed_error_border@
+default-timeout=0
+text-color=#@base08@
+
+[urgency=low]
+border-color=#@zed_border_variant@

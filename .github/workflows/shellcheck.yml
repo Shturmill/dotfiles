@@ -1,0 +1,14 @@
+name: shellcheck
+
+on: [push, pull_request]
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # -x follows the `# shellcheck source=` lines into lib/ and modules/
+      - run: shellcheck -x install.sh bin/*
+      # Sourced files are only reported when named; their globals live in
+      # install.sh (SC2154 = used but not assigned, SC2034 = the reverse).
+      - run: shellcheck -e SC2154,SC2034 lib/*.sh modules/*.sh

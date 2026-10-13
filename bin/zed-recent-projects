@@ -1,0 +1,87 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+set -o pipefail
+
+# Zed has no file or CLI that lists its recent projects; they are the rows
+# of the workspace database it restores sessions from. This copies Zed's
+# desktop entry into XDG_DATA_HOME, where it shadows the system one by ID,
+# with one desktop action per recent folder in front of "Open a new
+# workspace". Wofi renders actions as an expandable entry, opened by a click
+# (or by Right, with the wofi patch in the NixOS config).
+#
+# Run right before wofi by the launcher bind in hyprland.lua, so the list is
+# as fresh as the menu. The new entry is compared in memory and the directory
+# is left alone unless it changed: GLib apps watch it and reload on any event
+# there, a temporary file included.
+#
+# Needs sqlite3.
+
+
+data_home=${XDG_DATA_HOME:-$HOME/.local/share}
+db=$data_home/zed/db/0-stable/db.sqlite
+out=$data_home/applications/dev.zed.Zed.desktop
+max=6
+
+# Newest first, one row per workspace, its roots joined by \x1f instead
+# of the newline Zed stores between them. Remote projects are skipped.
+rows=""
+if [[ -f $db ]]; then
+  rows=$(sqlite3 -readonly -cmd ".timeout 500" "$db" \
+    "SELECT replace(paths, char(10), char(31)) FROM workspaces
+     WHERE remote_connection_id IS NULL AND length(paths) > 0
+     ORDER BY timestamp DESC")
+fi
+
+count=0 actions="" keywords="" sections=""
+while IFS= read -r row && ((count < max)); do
+  [[ -n $row ]] || continue
+  IFS=$'\x1f' read -ra roots <<<"$row"
+
+  args="" label="" names=""
+  for root in "${roots[@]}"; do
+    # Folders only: a file opened on its own is a workspace too. A path
+    # that would need escaping inside a quoted Exec argument is left out.
+    if [[ ! -d $root || $root == *[\"\`\$\\]* ]]; then
+      continue 2
+    fi
+    args+=" \"${root//%/%%}\""
+    case $root in
+      "$HOME"/*) shown=\~/${root#"$HOME"/} ;;
+      *) shown=$root ;;
+    esac
+    label+="${label:+, }$shown"
+    names+="${root##*/};"
+  done
+
+  # wofi runs with allow_markup, so the label is Pango markup.
+  label=${label//&/"&amp;"}
+  label=${label//</"&lt;"}
+  label=${label//>/"&gt;"}
+
+  count=$((count + 1))
+  actions+="recent$count;"
+  # Typing a project's name in wofi finds Zed.
+  keywords+=$names
+  sections+=$'\n'"[Desktop Action recent$count]"$'\n'"Name=$label"$'\n'"Exec=zeditor$args"$'\n'
+done <<<"$rows"
+
+entry=$(
+  while IFS= read -r line; do
+    case $line in
+      Actions=*) line="Actions=$actions${line#Actions=}" ;;
+      Keywords=*) line+=$keywords ;;
+    esac
+    printf '%s\n' "$line"
+  done </usr/share/applications/dev.zed.Zed.desktop
+  printf '%s' "$sections"
+)
+
+if [[ ! -f $out || $(<"$out") != "$entry" ]]; then
+  mkdir -p "${out%/*}"
+  tmp=$(mktemp "$out.XXXXXX")
+  printf '%s\n' "$entry" >"$tmp"
+  chmod 644 "$tmp"
+  mv -f "$tmp" "$out"
+fi
+

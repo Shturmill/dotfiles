@@ -1,59 +1,120 @@
 window {
-  background-color: transparent;
+    background-color: transparent;
 }
 
 #outer-box {
-  margin: 0;
-  padding: 6px;
-  background-color: #@base00@;
-  border: 1px solid #@zed_border@;
-  border-radius: 10px;
+    margin: 0;
+    padding: 6px;
+    background-color: #@base00@;
+    border: 1px solid #@zed_border@;
+    border-radius: 10px;
 }
 
 * {
-  font-family: "JetBrains Mono";
-  color: #@base05@;
+    font-family: "JetBrains Mono";
+    color: #@base05@;
 }
 
 #scroll {
-  padding: 0.5rem;
+    padding: 0.5rem;
 }
 
 #input {
-  margin: 0.5rem;
-  padding: 0.6rem;
-  background-color: #@zed_surface@;
-  color: #@base05@;
-  border: 1px solid #@zed_border_variant@;
-  border-radius: 8px;
-  outline: none;
-  box-shadow: none;
-  font-size: 1rem;
+    margin: 0.5rem;
+    padding: 0.6rem;
+    background-color: #@zed_surface@;
+    color: #@base05@;
+    border: 1px solid #@zed_border_variant@;
+    border-radius: 8px;
+    outline: none;
+    box-shadow: none;
+    font-size: 1rem;
 }
 
 #input:focus {
-  border-color: #@zed_focus_border@;
+    border-color: #@zed_focus_border@;
 }
 
 #inner-box {
-  margin: 0 0.5rem 0.5rem;
-  font-size: 1rem;
+    margin: 0 0.5rem 0.5rem;
+    font-size: 1rem;
 }
 
 #img {
-  margin: 10px;
+    margin: 6px 12px 6px 6px;
 }
 
-#entry {
-  border-radius: 8px;
-  padding: 0.25rem;
+/* wofi names both the list rows and the action rows "#entry", and an open
+   entry is one list row holding its actions. Rows only carry the divider,
+   which stays outside the rounded highlight; the highlight sits on what a row
+   shows. An open row (".expanded", set by the wofi patch in
+   modules/desktop.nix) takes none, its selected action is the cursor. */
+#inner-box > flowboxchild {
+    padding: 2px 0;
+    background-color: transparent;
+    border-bottom: 1px solid #@zed_border_variant@;
+    outline: none;
+}
+
+#inner-box > flowboxchild:last-child {
+    border-bottom: none;
+}
+
+#inner-box > flowboxchild > .entry,
+#inner-box > flowboxchild > expander,
+#expander-box > row {
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+}
+
+/* A row without an icon (clipboard text) would shrink to one tight line;
+   rows with icons are taller anyway. */
+#inner-box > flowboxchild > .entry {
+    min-height: 1.75rem;
+}
+
+#inner-box > flowboxchild:hover > .entry,
+#inner-box > flowboxchild:hover > expander,
+#expander-box > row:hover {
+    background-color: #@zed_hover@;
 }
 
 /* Neutral selection; blue stays an indicator, as in Zed. */
-#entry:selected {
-  background-color: #@zed_selected@;
+#inner-box > flowboxchild:selected > .entry,
+#inner-box > flowboxchild:selected > expander,
+#expander-box > row:selected {
+    background-color: #@zed_selected@;
+}
+
+#inner-box > flowboxchild.expanded:hover > expander,
+#inner-box > flowboxchild.expanded:selected > expander {
+    background-color: transparent;
 }
 
 #text:selected {
-  color: #@base05@;
+    color: #@base05@;
+}
+
+/* Multi-action entries (Zed's recent projects, an app's own actions): the
+   arrow is chrome, the actions sit indented under their app in muted text. */
+expander arrow,
+#expander-box #text {
+    color: #@base04@;
+}
+
+#expander-box {
+    background-color: transparent;
+    margin-left: 1.5rem;
+}
+
+/* The selected action is the cursor; GTK's focus ring would draw a second one. */
+#expander-box > row {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    box-shadow: none;
+}
+
+#expander-box > row:selected #text {
+    color: #@base05@;
 }

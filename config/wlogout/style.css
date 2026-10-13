@@ -1,0 +1,66 @@
+* {
+  background-image: none;
+  box-shadow: none;
+  font-family: "JetBrainsMono Nerd Font";
+}
+
+window {
+  background-color: alpha(#@base00@, 0.92);
+}
+
+button {
+  color: #@base05@;
+
+  background-color: alpha(#@zed_surface@, 0.96);
+
+  border: 1px solid #@zed_border@;
+  border-radius: 18px;
+
+  margin: 10px;
+  padding: 28px;
+
+  font-size: 19px;
+  font-weight: 500;
+
+  outline-style: none;
+  text-shadow: none;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+/* Neutral by default; destructive actions get Zed's tinted semantic
+   backgrounds instead of a saturated fill. */
+button:hover,
+button:focus {
+  color: #@base05@;
+  background-color: #@zed_hover@;
+  border-color: #@zed_border@;
+}
+
+button:active {
+  background-color: #@zed_selected@;
+}
+
+#suspend:hover,
+#suspend:focus {
+  color: #@base0D@;
+  background-color: #@zed_info_bg@;
+  border-color: #@zed_info_border@;
+}
+
+#reboot:hover,
+#reboot:focus {
+  color: #@base0A@;
+  background-color: #@zed_warning_bg@;
+  border-color: #@zed_warning_border@;
+}
+
+#shutdown:hover,
+#shutdown:focus {
+  color: #@base08@;
+  background-color: #@zed_error_bg@;
+  border-color: #@zed_error_border@;
+}

@@ -1,4 +1,4 @@
-#!/bin/bash
+# shellcheck shell=bash
 
 # Yay AUR Helper Installation
 
@@ -38,7 +38,7 @@ install_yay() {
         fi
 
         log_info "Building and installing yay..."
-        cd "$yay_dir"
+        cd "$yay_dir" || return 1
         if makepkg -si --noconfirm; then
             log_info "yay installed successfully"
         else
